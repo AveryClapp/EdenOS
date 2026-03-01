@@ -50,3 +50,5 @@ class Task(Base):
 
     schedule_blocks: Mapped[list["ScheduleBlock"]] = relationship("ScheduleBlock", back_populates="task")
 
+    learning_records: Mapped[list["LearningRecord"]] = relationship("LearningRecord", back_populates="task")
+
