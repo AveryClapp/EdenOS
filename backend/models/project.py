@@ -25,3 +25,4 @@ class Project(Base):
     github_repo: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     goal: Mapped["Goal"] = relationship("Goal", back_populates="projects")
+    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="project")
