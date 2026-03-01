@@ -6,6 +6,7 @@ import backend.models.goal  # noqa: F401 — registers with Base.metadata
 import backend.models.project  # noqa: F401
 import backend.models.task  # noqa: F401
 import backend.models.energy_profile  # noqa: F401
+import backend.models.schedule_block  # noqa: F401
 
 
 @pytest.fixture()

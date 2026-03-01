@@ -48,3 +48,5 @@ class Task(Base):
         backref="dependents",
     )
 
+    schedule_blocks: Mapped[list["ScheduleBlock"]] = relationship("ScheduleBlock", back_populates="task")
+
