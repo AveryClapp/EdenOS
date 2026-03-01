@@ -24,3 +24,4 @@ class Goal(Base):
 
     parent: Mapped["Goal | None"] = relationship("Goal", remote_side="Goal.id", back_populates="children")
     children: Mapped[list["Goal"]] = relationship("Goal", back_populates="parent")
+    projects: Mapped[list["Project"]] = relationship("Project", back_populates="goal")
