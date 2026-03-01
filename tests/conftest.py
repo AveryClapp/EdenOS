@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from backend.db import Base
+import backend.models.goal  # noqa: F401 — registers with Base.metadata
 
 
 @pytest.fixture()
