@@ -4,6 +4,7 @@ from backend.models.task import Task, task_dependencies
 from backend.models.energy_profile import EnergyProfile
 from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
+from backend.models.availability_window import AvailabilityWindow
 
 __all__ = [
     "Goal",
@@ -13,4 +14,5 @@ __all__ = [
     "EnergyProfile",
     "ScheduleBlock",
     "LearningRecord",
+    "AvailabilityWindow",
 ]
