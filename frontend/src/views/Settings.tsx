@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getEnergyProfile, setEnergyProfile } from '../api/energy_profile'
+import { getUserProfile, updateUserProfile, getEnergyDefaults } from '../api/user_profile'
+import type { UserProfile } from '../types'
 import { listAvailability, createAvailability, deleteAvailability } from '../api/availability'
 import { syncGitHub } from '../api/github'
 import { listProjects } from '../api/projects'
@@ -14,6 +16,120 @@ const ENERGY_COLORS = [
   'text-lime-400',
   'text-emerald-400',
 ]
+
+// ─── Chronotype ───────────────────────────────────────────────────────────────
+
+const CHRONOTYPE_OPTIONS = [
+  { value: 'early', label: 'Early bird', hint: 'Natural wake ~5–6am' },
+  { value: 'intermediate', label: 'Intermediate', hint: 'Natural wake ~7–8am' },
+  { value: 'late', label: 'Night owl', hint: 'Natural wake ~9–10am' },
+] as const
+
+function ChronotypeSection() {
+  const qc = useQueryClient()
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: getUserProfile,
+  })
+
+  const [wakeHour, setWakeHour] = useState<number>(7)
+  const [chronotype, setChronotype] = useState<string>('intermediate')
+  const [saved, setSaved] = useState(false)
+  const [applying, setApplying] = useState(false)
+
+  useEffect(() => {
+    if (profile) {
+      setWakeHour(profile.wake_hour)
+      setChronotype(profile.chronotype)
+    }
+  }, [profile])
+
+  const { mutate: save, isPending: saving } = useMutation({
+    mutationFn: () => updateUserProfile({ wake_hour: wakeHour, chronotype }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user-profile'] })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    },
+  })
+
+  const { mutate: applyDefaults } = useMutation({
+    mutationFn: async () => {
+      await updateUserProfile({ wake_hour: wakeHour, chronotype })
+      const defaults = await getEnergyDefaults()
+      return setEnergyProfile(defaults)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['user-profile'] })
+      qc.invalidateQueries({ queryKey: ['energy-profile'] })
+      setApplying(false)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    },
+    onMutate: () => setApplying(true),
+  })
+
+  const wakeTimeStr = `${String(wakeHour).padStart(2, '0')}:00`
+
+  function handleWakeTimeChange(val: string) {
+    const [h] = val.split(':').map(Number)
+    if (!isNaN(h) && h >= 0 && h <= 23) setWakeHour(h)
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-zinc-600 text-xs">
+        Eden schedules deep work (load=3) in your peak cognitive window — 2–4h after waking.
+        Set your wake time and Eden pre-populates your energy profile with the science-based curve.
+      </p>
+
+      <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-zinc-600 text-xs">Wake time</span>
+          <input
+            type="time"
+            value={wakeTimeStr}
+            onChange={(e) => handleWakeTimeChange(e.target.value)}
+            className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs w-28"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-zinc-600 text-xs">Chronotype</span>
+          <select
+            value={chronotype}
+            onChange={(e) => setChronotype(e.target.value)}
+            className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs"
+          >
+            {CHRONOTYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label} — {o.hint}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => save()}
+          disabled={saving || saved}
+          className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors"
+        >
+          {saving ? '...' : saved ? '[ saved ✓ ]' : '[ save ]'}
+        </button>
+        <button
+          onClick={() => applyDefaults()}
+          disabled={applying}
+          className="text-xs text-zinc-400 hover:text-zinc-200 disabled:text-zinc-700 border border-zinc-700 disabled:border-zinc-800 px-2 py-0.5 transition-colors"
+        >
+          {applying ? 'applying...' : '[ apply to energy profile ]'}
+        </button>
+        <span className="text-zinc-700 text-xs">overwrites energy grid with science curve</span>
+      </div>
+    </div>
+  )
+}
 
 // ─── Energy Profile ───────────────────────────────────────────────────────────
 
@@ -284,6 +400,13 @@ export default function Settings() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-10">
+        <section>
+          <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
+            Chronotype
+          </h2>
+          <ChronotypeSection />
+        </section>
+
         <section>
           <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
             Energy Profile
