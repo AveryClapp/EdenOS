@@ -24,6 +24,7 @@ export const updateTask = (
     estimated_minutes: number
     deadline: string | null
     status: 'backlog' | 'active' | 'in_progress' | 'done' | 'deferred'
+    dependency_ids: string[]
   }>,
 ) => apiFetch<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
 

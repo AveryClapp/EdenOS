@@ -39,6 +39,7 @@ export interface Task {
   actual_minutes: number | null
   deadline: string | null
   recurrence_rule: string | null
+  dependency_ids: string[]
   source: string
   created_at: string
 }

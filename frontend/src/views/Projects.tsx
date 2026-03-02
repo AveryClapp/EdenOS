@@ -48,13 +48,14 @@ const STATUS_NEXT_LABEL: Record<string, string> = {
   done: 'reopen → backlog',
 }
 
-function TaskRow({ task }: { task: Task }) {
+function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDesc, setEditDesc] = useState(task.description ?? '')
   const [editMins, setEditMins] = useState(String(task.estimated_minutes))
+  const [editDeps, setEditDeps] = useState<string[]>(task.dependency_ids ?? [])
 
   const { mutate: advance } = useMutation({
     mutationFn: (status: string) => updateTask(task.id, { status: status as Task['status'] }),
@@ -67,6 +68,7 @@ function TaskRow({ task }: { task: Task }) {
         title: editTitle,
         description: editDesc || null,
         estimated_minutes: Number(editMins),
+        dependency_ids: editDeps,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
@@ -87,6 +89,7 @@ function TaskRow({ task }: { task: Task }) {
     setEditTitle(task.title)
     setEditDesc(task.description ?? '')
     setEditMins(String(task.estimated_minutes))
+    setEditDeps(task.dependency_ids ?? [])
     setEditing(true)
     setExpanded(true)
   }
@@ -114,6 +117,11 @@ function TaskRow({ task }: { task: Task }) {
         )}
         {task.recurrence_rule && (
           <span className="text-zinc-700 shrink-0">↻</span>
+        )}
+        {task.dependency_ids && task.dependency_ids.length > 0 && (
+          <span className="text-zinc-700 text-xs shrink-0" title="has dependencies">
+            ⇢{task.dependency_ids.length}
+          </span>
         )}
         <button
           className="text-zinc-700 hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
@@ -153,6 +161,32 @@ function TaskRow({ task }: { task: Task }) {
             value={editDesc}
             onChange={(e) => setEditDesc(e.target.value)}
           />
+          {projectTasks.length > 0 && (
+            <div>
+              <span className="text-zinc-600">blocks on:</span>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {projectTasks.map((pt) => (
+                  <label key={pt.id} className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editDeps.includes(pt.id)}
+                      onChange={(e) =>
+                        setEditDeps((prev) =>
+                          e.target.checked
+                            ? [...prev, pt.id]
+                            : prev.filter((id) => id !== pt.id)
+                        )
+                      }
+                      className="accent-emerald-500"
+                    />
+                    <span className={`text-xs ${pt.status === 'done' ? 'text-zinc-600 line-through' : 'text-zinc-400'}`}>
+                      {pt.title}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-zinc-600">mins</span>
             <input
@@ -382,7 +416,13 @@ function ProjectCard({
           {tasks.length === 0 && !addingTask ? (
             <div className="px-4 py-3 text-zinc-700 text-xs">no tasks</div>
           ) : (
-            tasks.map((t) => <TaskRow key={t.id} task={t} />)
+            tasks.map((t) => (
+              <TaskRow
+                key={t.id}
+                task={t}
+                projectTasks={tasks.filter((pt) => pt.id !== t.id)}
+              />
+            ))
           )}
         </div>
       )}
