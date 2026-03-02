@@ -149,3 +149,16 @@ def test_context_snapshot_includes_whoop_today(db):
     assert "whoop_today" in snapshot
     # No Whoop data in test DB — should return None
     assert snapshot["whoop_today"] is None
+
+
+def test_context_snapshot_includes_behavioral_profile(db):
+    from backend.intelligence.context import build_context_snapshot
+    snapshot = build_context_snapshot(db)
+    assert "behavioral_profile" in snapshot
+
+
+def test_context_snapshot_includes_user_memory(db):
+    from backend.intelligence.context import build_context_snapshot
+    snapshot = build_context_snapshot(db)
+    assert "user_memory" in snapshot
+    assert isinstance(snapshot["user_memory"], list)

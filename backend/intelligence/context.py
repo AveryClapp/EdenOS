@@ -8,6 +8,7 @@ from backend.models.energy_profile import EnergyProfile
 from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
 from backend.scheduler.decay import compute_urgency
+from backend.intelligence.behavioral_profile import build_behavioral_profile
 
 _72H = timedelta(hours=72)
 _24H = timedelta(hours=24)
@@ -31,6 +32,8 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
         "alerts": _build_alerts(db, now),
         "user_profile": _build_user_profile(db),
         "whoop_today": _build_whoop_today(db, now),
+        "behavioral_profile": build_behavioral_profile(db),
+        "user_memory": _build_user_memory(db),
     }
 
 
@@ -151,6 +154,12 @@ def _build_user_profile(db: Session) -> dict:
     if not profile:
         return {"wake_hour": 7, "chronotype": "intermediate"}
     return {"wake_hour": profile.wake_hour, "chronotype": profile.chronotype}
+
+
+def _build_user_memory(db: Session) -> list[dict]:
+    from backend.models.user_memory import UserMemory
+    memories = db.query(UserMemory).filter(UserMemory.is_active == True).all()
+    return [{"category": m.category, "content": m.content} for m in memories]
 
 
 def _build_alerts(db: Session, now: datetime) -> list[dict]:
