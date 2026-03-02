@@ -1,9 +1,16 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
+
+_RECURRENCE_INTERVALS: dict[str, timedelta] = {
+    "daily":    timedelta(days=1),
+    "weekly":   timedelta(days=7),
+    "biweekly": timedelta(days=14),
+    "monthly":  timedelta(days=30),
+}
 from backend.models.project import Project
 from backend.models.task import Task
 from backend.models.schedule_block import ScheduleBlock
@@ -95,6 +102,11 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
     db.add(record)
 
     if task.recurrence_rule:
+        interval = _RECURRENCE_INTERVALS.get(task.recurrence_rule)
+        next_deadline: datetime | None = None
+        if interval:
+            base = task.deadline if task.deadline else datetime.utcnow()
+            next_deadline = base + interval
         recurrence_copy = Task(
             id=str(uuid.uuid4()),
             project_id=task.project_id,
@@ -103,6 +115,7 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
             cognitive_load=task.cognitive_load,
             estimated_minutes=task.estimated_minutes,
             recurrence_rule=task.recurrence_rule,
+            deadline=next_deadline,
             source=task.source,
             status="backlog",
             created_at=datetime.utcnow(),

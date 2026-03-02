@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 
 def _setup(client):
@@ -117,3 +118,87 @@ def test_list_tasks_filter_by_project(client):
     r = client.get(f"/api/tasks?project_id={project['id']}")
     assert r.status_code == 200
     assert len(r.json()) == 1
+
+
+def _make_project_and_task(client, recurrence_rule="weekly", with_deadline=True):
+    goal_r = client.post("/api/goals", json={
+        "title": "G", "tier": "mid", "weight": 1.0,
+        "target_date": "2027-01-01"
+    })
+    proj_r = client.post("/api/projects", json={
+        "title": "P", "goal_id": goal_r.json()["id"],
+        "category": "engineering", "estimated_hours_remaining": 10
+    })
+    deadline = (datetime.utcnow() + timedelta(days=7)).isoformat() if with_deadline else None
+    task_r = client.post("/api/tasks", json={
+        "project_id": proj_r.json()["id"],
+        "title": "Weekly review",
+        "cognitive_load": 1,
+        "estimated_minutes": 30,
+        "recurrence_rule": recurrence_rule,
+        "deadline": deadline,
+    })
+    return task_r.json()
+
+
+def test_completing_recurring_task_spawns_next_occurrence(client):
+    task = _make_project_and_task(client, recurrence_rule="weekly")
+    r = client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 25,
+        "completion_quality": 4,
+        "energy_level_at_start": 3,
+    })
+    assert r.status_code == 200
+
+    tasks_r = client.get("/api/tasks")
+    titles = [t["title"] for t in tasks_r.json()]
+    assert titles.count("Weekly review") == 2  # original (done) + new occurrence
+
+
+def test_recurring_task_next_deadline_is_offset_from_original(client):
+    task = _make_project_and_task(client, recurrence_rule="weekly", with_deadline=True)
+    original_deadline = task["deadline"]
+
+    client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 25, "completion_quality": 4, "energy_level_at_start": 3,
+    })
+
+    tasks_r = client.get("/api/tasks")
+    new_task = next(t for t in tasks_r.json() if t["id"] != task["id"])
+    assert new_task["deadline"] is not None
+
+    orig_dt = datetime.fromisoformat(original_deadline.replace("Z", ""))
+    new_dt = datetime.fromisoformat(new_task["deadline"].replace("Z", ""))
+    diff = (new_dt - orig_dt).days
+    assert diff == 7  # weekly = +7 days
+
+
+def test_recurring_daily_adds_one_day(client):
+    task = _make_project_and_task(client, recurrence_rule="daily", with_deadline=True)
+    original_deadline = task["deadline"]
+
+    client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 10, "completion_quality": 4, "energy_level_at_start": 3,
+    })
+
+    tasks_r = client.get("/api/tasks")
+    new_task = next(t for t in tasks_r.json() if t["id"] != task["id"])
+    orig_dt = datetime.fromisoformat(original_deadline.replace("Z", ""))
+    new_dt = datetime.fromisoformat(new_task["deadline"].replace("Z", ""))
+    assert (new_dt - orig_dt).days == 1
+
+
+def test_recurring_without_deadline_uses_today_as_base(client):
+    task = _make_project_and_task(client, recurrence_rule="weekly", with_deadline=False)
+
+    client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 25, "completion_quality": 4, "energy_level_at_start": 3,
+    })
+
+    tasks_r = client.get("/api/tasks")
+    new_task = next(t for t in tasks_r.json() if t["id"] != task["id"])
+    assert new_task["deadline"] is not None
+    new_dt = datetime.fromisoformat(new_task["deadline"].replace("Z", ""))
+    now = datetime.utcnow()
+    # Should be ~7 days from now (allow 1 day slack for test timing)
+    assert 6 <= (new_dt - now).days <= 8
