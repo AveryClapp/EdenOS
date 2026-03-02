@@ -53,6 +53,7 @@ export interface ScheduleBlock {
   end_time: string
   auto_generated: boolean
   overridden_by_user: boolean
+  is_draft: boolean
 }
 
 export interface ScheduleResponse {
@@ -115,6 +116,9 @@ export interface UserProfile {
   id: string
   wake_hour: number
   chronotype: 'early' | 'intermediate' | 'late'
+  autonomy_level: number
+  planning_time: string
+  planning_auto_lock_minutes: number
 }
 
 export interface EnergyDefault {
@@ -136,4 +140,35 @@ export interface WhoopToday {
 export interface WhoopStatus {
   connected: boolean
   today: WhoopToday | null
+}
+
+export interface UserMemory {
+  id: string
+  category: 'preference' | 'constraint' | 'goal_context' | 'personal' | 'signal'
+  content: string
+  confidence: number
+  source: string
+  created_at: string
+  is_active: boolean
+}
+
+export interface NowSuggestion {
+  task: Task | null
+  reason: string
+  suggested_at: string
+}
+
+export interface DraftBlock {
+  id: string
+  task_id: string | null
+  date: string
+  start_time: string
+  end_time: string
+  reason?: string
+}
+
+export interface PlanProposal {
+  blocks: DraftBlock[]
+  summary: string
+  date: string
 }
