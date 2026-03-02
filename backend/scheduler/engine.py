@@ -45,6 +45,7 @@ class SchedulerEngine:
         now: datetime | None = None,
         start_date: date | None = None,
         correction_factors: dict | None = None,
+        recovery_multiplier: float = 1.0,
     ) -> list[ScheduleBlockResult]:
         if now is None:
             now = datetime.utcnow()
@@ -68,7 +69,10 @@ class SchedulerEngine:
         recovery_abs = {
             s.absolute_index for s in slots if is_recovery_slot(s, energy_profiles)
         }
-        energy_map = {s.absolute_index: get_slot_energy(s, energy_profiles) for s in slots}
+        energy_map = {
+            s.absolute_index: max(1, round(get_slot_energy(s, energy_profiles) * recovery_multiplier))
+            for s in slots
+        }
 
         cf = correction_factors or {}
         units_per_task = [

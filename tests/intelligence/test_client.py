@@ -141,3 +141,11 @@ def test_context_snapshot_includes_user_profile(db):
     assert "user_profile" in snapshot
     assert "wake_hour" in snapshot["user_profile"]
     assert "chronotype" in snapshot["user_profile"]
+
+
+def test_context_snapshot_includes_whoop_today(db):
+    from backend.intelligence.context import build_context_snapshot
+    snapshot = build_context_snapshot(db)
+    assert "whoop_today" in snapshot
+    # No Whoop data in test DB — should return None
+    assert snapshot["whoop_today"] is None

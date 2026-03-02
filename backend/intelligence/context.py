@@ -30,6 +30,7 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
         "learning_summary": _build_learning_summary(db),
         "alerts": _build_alerts(db, now),
         "user_profile": _build_user_profile(db),
+        "whoop_today": _build_whoop_today(db, now),
     }
 
 
@@ -122,6 +123,25 @@ def _build_learning_summary(db: Session) -> dict:
             for load, rs in by_load.items()
             if rs
         },
+    }
+
+
+def _build_whoop_today(db: Session, now: datetime) -> dict | None:
+    from backend.models.whoop_daily import WhoopDaily
+    today = now.date()
+    daily = db.query(WhoopDaily).filter(WhoopDaily.date == today).first()
+    if not daily:
+        return None
+    rec = daily.recovery_score
+    recommendation = "green" if rec and rec >= 67 else ("yellow" if rec and rec >= 34 else "red") if rec else None
+    return {
+        "recovery_score": daily.recovery_score,
+        "hrv_rms": daily.hrv_rms,
+        "resting_hr": daily.resting_hr,
+        "sleep_quality_score": daily.sleep_quality_score,
+        "strain_score": daily.strain_score,
+        "actual_wake_time": daily.actual_wake_time.strftime("%H:%M") if daily.actual_wake_time else None,
+        "recommendation": recommendation,
     }
 
 

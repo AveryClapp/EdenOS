@@ -53,6 +53,14 @@ def get_schedule(
     }
 
 
+def _recovery_multiplier(recovery_score: int) -> float:
+    if recovery_score < 34:
+        return 0.6   # red — significant reduction
+    if recovery_score < 67:
+        return 0.85  # yellow — moderate reduction
+    return 1.0       # green — full energy
+
+
 def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
     """Core scheduler logic — callable from both the route and the background loop."""
     now = datetime.utcnow()
@@ -81,6 +89,15 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         if len(ratios) >= 3:
             correction_factors[load] = sum(ratios) / len(ratios)
 
+    from backend.models.whoop_daily import WhoopDaily
+    from datetime import date as _date
+
+    # Determine recovery multiplier from today's Whoop data
+    today_whoop = db.query(WhoopDaily).filter(WhoopDaily.date == _date.today()).first()
+    recovery_mult = 1.0
+    if today_whoop and today_whoop.recovery_score is not None:
+        recovery_mult = _recovery_multiplier(today_whoop.recovery_score)
+
     results = _engine.run(
         tasks=tasks,
         fixed_blocks=fixed_blocks,
@@ -89,6 +106,7 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         now=now,
         start_date=start_date,
         correction_factors=correction_factors,
+        recovery_multiplier=recovery_mult,
     )
 
     deleted = db.query(ScheduleBlock).filter(

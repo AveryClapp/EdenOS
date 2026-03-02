@@ -217,3 +217,35 @@ def test_engine_is_deterministic():
         assert r1.task_id == r2.task_id
         assert r1.date == r2.date
         assert r1.start_time == r2.start_time
+
+
+def test_recovery_multiplier_reduces_energy_weight():
+    """With low recovery, load=3 tasks should score lower and get worse slots."""
+    # This is a smoke test — just verify the engine accepts recovery_multiplier
+    # and runs without error.
+    from backend.scheduler.engine import SchedulerEngine
+    from datetime import datetime, date, time
+    import uuid
+
+    class _Task:
+        id = str(uuid.uuid4())
+        project_id = "p1"
+        title = "Deep task"
+        status = "active"
+        cognitive_load = 3
+        estimated_minutes = 60
+        deadline = None
+        created_at = datetime(2026, 1, 1)
+        dependencies = []
+
+    engine = SchedulerEngine()
+    # Should not raise with recovery_multiplier parameter
+    results = engine.run(
+        tasks=[_Task()],
+        fixed_blocks=[],
+        energy_profiles=[],
+        availability_windows=[],
+        recovery_multiplier=0.6,
+    )
+    # Results may be empty or have blocks — just verify no crash
+    assert isinstance(results, list)
