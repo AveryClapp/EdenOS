@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSchedule, runScheduler, planDay } from '../api/schedule'
 import { listTasks, completeTask } from '../api/tasks'
+import { getNowSuggestion } from '../api/now'
 import AlertStrip from '../components/AlertStrip'
 import LoadDots from '../components/LoadDots'
 import type { ScheduleBlock, Task, PlanDayResult } from '../types'
@@ -136,6 +137,60 @@ function BlockRow({ block, task }: { block: ScheduleBlock; task?: Task }) {
   )
 }
 
+function NowStrip() {
+  const qc = useQueryClient()
+  const { data, isLoading } = useQuery({
+    queryKey: ['now'],
+    queryFn: getNowSuggestion,
+    refetchInterval: 60_000,
+  })
+
+  const [skips, setSkips] = useState(0)
+  const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null)
+
+  const now = Date.now()
+  const isSnoozed = snoozedUntil !== null && now < snoozedUntil
+
+  if (isLoading || isSnoozed) return null
+  if (!data?.task) return null
+
+  const handleSkip = () => {
+    setSkips(s => s + 1)
+    qc.invalidateQueries({ queryKey: ['now'] })
+  }
+
+  const handleNotNow = () => {
+    setSnoozedUntil(Date.now() + 20 * 60 * 1000)
+  }
+
+  return (
+    <div className="border-b border-zinc-800 px-6 py-3 flex items-center gap-4 text-xs">
+      <button
+        onClick={() => qc.invalidateQueries({ queryKey: ['now'] })}
+        className="text-emerald-500 hover:text-emerald-400 shrink-0 transition-colors"
+      >
+        [ on it ]
+      </button>
+      <span className="text-zinc-400 flex-1 truncate">
+        <span className="text-zinc-200">{data.task.title}</span>
+        {' '}—{' '}
+        <span className="text-zinc-600">{data.reason}</span>
+      </span>
+      <button onClick={handleSkip} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
+        [ skip ]
+      </button>
+      <button onClick={handleNotNow} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
+        [ not now ]
+      </button>
+      {skips >= 3 && (
+        <span className="text-yellow-600 text-xs shrink-0">
+          day drifting — <a href="/plan" className="underline">replan?</a>
+        </span>
+      )}
+    </div>
+  )
+}
+
 export default function Today() {
   const qc = useQueryClient()
   const [intent, setIntent] = useState('')
@@ -174,6 +229,7 @@ export default function Today() {
 
   return (
     <div className="flex flex-col h-full">
+      <NowStrip />
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0">
         <span className="text-zinc-100 text-sm tracking-widest">{formatDate(new Date())}</span>
