@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import date, datetime
+from datetime import date, datetime, time
 from typing import Literal
 from pydantic import BaseModel
 
@@ -156,3 +156,57 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     content: str
     reasoning: str
+
+
+# --- Energy Profile ---
+
+class EnergyProfileEntry(BaseModel):
+    hour_of_day: int   # 0–23
+    day_of_week: int   # 0=Mon, 6=Sun
+    energy_level: int  # 1–5
+    is_post_hard_workout: bool = False
+    notes: str | None = None
+
+
+class EnergyProfileBulkSet(BaseModel):
+    entries: list[EnergyProfileEntry]
+
+
+class EnergyProfileResponse(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: str
+    hour_of_day: int
+    day_of_week: int
+    energy_level: int
+    is_post_hard_workout: bool
+    notes: str | None
+
+
+# --- Availability Windows ---
+
+class AvailabilityCreate(BaseModel):
+    day_of_week: int | None = None   # None = every day; 0=Mon–6=Sun
+    start_time: str                  # "HH:MM"
+    end_time: str                    # "HH:MM"
+    is_available: bool = True
+    note: str | None = None
+
+
+class AvailabilityUpdate(BaseModel):
+    day_of_week: int | None = None
+    start_time: str | None = None
+    end_time: str | None = None
+    is_available: bool | None = None
+    note: str | None = None
+
+
+class AvailabilityResponse(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: str
+    day_of_week: int | None
+    start_time: time
+    end_time: time
+    is_available: bool
+    note: str | None
