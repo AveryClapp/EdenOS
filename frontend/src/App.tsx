@@ -6,6 +6,7 @@ import Goals from './views/Goals'
 import Projects from './views/Projects'
 import Chat from './views/Chat'
 import Settings from './views/Settings'
+import PlanningSession from './views/PlanningSession'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/goals" element={<Goals />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/plan" element={<PlanningSession />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
