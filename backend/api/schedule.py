@@ -8,6 +8,7 @@ from backend.models.task import Task
 from backend.models.schedule_block import ScheduleBlock
 from backend.models.energy_profile import EnergyProfile
 from backend.models.availability_window import AvailabilityWindow
+from backend.models.learning_record import LearningRecord
 from backend.scheduler.engine import SchedulerEngine
 from backend.scheduler.priority import recompute_all_priorities
 from backend.api.schemas import ScheduleOverride, ScheduleRunResponse
@@ -65,6 +66,18 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
     energy_profiles = db.query(EnergyProfile).all()
     availability_windows = db.query(AvailabilityWindow).all()
 
+    # Build per-cognitive-load correction factors from learning history.
+    # Only applied when >= 3 samples exist for a given load level.
+    correction_factors: dict[int, float] = {}
+    records = db.query(LearningRecord).all()
+    by_load: dict[int, list[float]] = {1: [], 2: [], 3: []}
+    for r in records:
+        if r.task and r.task.cognitive_load in by_load:
+            by_load[r.task.cognitive_load].append(r.actual_minutes / r.estimated_minutes)
+    for load, ratios in by_load.items():
+        if len(ratios) >= 3:
+            correction_factors[load] = sum(ratios) / len(ratios)
+
     results = _engine.run(
         tasks=tasks,
         fixed_blocks=fixed_blocks,
@@ -72,6 +85,7 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         availability_windows=availability_windows,
         now=now,
         start_date=start_date,
+        correction_factors=correction_factors,
     )
 
     deleted = db.query(ScheduleBlock).filter(

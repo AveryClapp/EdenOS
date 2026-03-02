@@ -183,6 +183,8 @@ function TaskRow({ task }: { task: Task }) {
   )
 }
 
+const LOAD_DEFAULT_MINS: Record<string, string> = { '1': '30', '2': '60', '3': '120' }
+
 function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => void }) {
   const qc = useQueryClient()
   const [title, setTitle] = useState('')
@@ -224,7 +226,7 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
         <select
           className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
           value={load}
-          onChange={(e) => setLoad(e.target.value)}
+          onChange={(e) => { setLoad(e.target.value); setMins(LOAD_DEFAULT_MINS[e.target.value]) }}
         >
           <option value="1">1</option>
           <option value="2">2</option>

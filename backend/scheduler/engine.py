@@ -44,6 +44,7 @@ class SchedulerEngine:
         availability_windows: list,
         now: datetime | None = None,
         start_date: date | None = None,
+        correction_factors: dict | None = None,
     ) -> list[ScheduleBlockResult]:
         if now is None:
             now = datetime.utcnow()
@@ -69,7 +70,11 @@ class SchedulerEngine:
         }
         energy_map = {s.absolute_index: get_slot_energy(s, energy_profiles) for s in slots}
 
-        units_per_task = [ceil(t.estimated_minutes / 30) for t in schedulable]
+        cf = correction_factors or {}
+        units_per_task = [
+            max(1, ceil(t.estimated_minutes * cf.get(t.cognitive_load, 1.0) / 30))
+            for t in schedulable
+        ]
 
         urgency_scores = []
         for t in schedulable:

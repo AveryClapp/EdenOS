@@ -101,11 +101,26 @@ def _build_learning_summary(db: Session) -> dict:
 
     ratios = [r.actual_minutes / r.estimated_minutes for r in records]
     n = len(ratios)
+
+    by_load: dict[int, list[float]] = {1: [], 2: [], 3: []}
+    for r in records:
+        load = r.task.cognitive_load if r.task else 2
+        if load in by_load:
+            by_load[load].append(r.actual_minutes / r.estimated_minutes)
+
     return {
         "total_records": n,
-        "avg_duration_ratio": sum(ratios) / n,
-        "overestimate_rate": sum(1 for r in ratios if r < 1.0) / n,
-        "underestimate_rate": sum(1 for r in ratios if r > 1.0) / n,
+        "avg_duration_ratio": round(sum(ratios) / n, 3),
+        "overestimate_rate": round(sum(1 for r in ratios if r < 1.0) / n, 3),
+        "underestimate_rate": round(sum(1 for r in ratios if r > 1.0) / n, 3),
+        "by_cognitive_load": {
+            str(load): {
+                "samples": len(rs),
+                "avg_ratio": round(sum(rs) / len(rs), 3),
+            }
+            for load, rs in by_load.items()
+            if rs
+        },
     }
 
 

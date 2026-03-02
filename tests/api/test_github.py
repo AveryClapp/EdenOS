@@ -47,7 +47,9 @@ def _patched_sync(client, project_id="p1", issues=None, prs=None):
 
 
 def test_sync_no_token(client):
-    r = client.post("/api/github/sync?project_id=p1")
+    with patch("backend.api.github.settings") as mock_settings:
+        mock_settings.github_token = ""
+        r = client.post("/api/github/sync?project_id=p1")
     assert r.status_code == 400
 
 
