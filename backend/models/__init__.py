@@ -5,6 +5,7 @@ from backend.models.energy_profile import EnergyProfile
 from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
 from backend.models.availability_window import AvailabilityWindow
+from backend.models.user_profile import UserProfile
 
 __all__ = [
     "Goal",
@@ -15,4 +16,5 @@ __all__ = [
     "ScheduleBlock",
     "LearningRecord",
     "AvailabilityWindow",
+    "UserProfile",
 ]
