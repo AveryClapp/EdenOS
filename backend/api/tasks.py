@@ -68,8 +68,17 @@ def update_task(task_id: str, body: TaskUpdate, db: Session = Depends(get_db)):
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
-    for field, value in body.model_dump(exclude_none=True).items():
+
+    data = body.model_dump(exclude_none=True)
+    dependency_ids = data.pop('dependency_ids', None)
+
+    for field, value in data.items():
         setattr(task, field, value)
+
+    if dependency_ids is not None:
+        deps = db.query(Task).filter(Task.id.in_(dependency_ids)).all() if dependency_ids else []
+        task.dependencies = deps
+
     db.commit()
     db.refresh(task)
     return task

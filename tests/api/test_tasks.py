@@ -202,3 +202,45 @@ def test_recurring_without_deadline_uses_today_as_base(client):
     now = datetime.utcnow()
     # Should be ~7 days from now (allow 1 day slack for test timing)
     assert 6 <= (new_dt - now).days <= 8
+
+
+def _create_two_tasks(client):
+    goal_r = client.post("/api/goals", json={
+        "title": "G2", "tier": "mid", "weight": 1.0, "target_date": "2027-01-01"
+    })
+    proj_r = client.post("/api/projects", json={
+        "title": "P2", "goal_id": goal_r.json()["id"],
+        "category": "engineering", "estimated_hours_remaining": 10
+    })
+    pid = proj_r.json()["id"]
+    t1 = client.post("/api/tasks", json={
+        "project_id": pid, "title": "First", "cognitive_load": 2, "estimated_minutes": 60
+    }).json()
+    t2 = client.post("/api/tasks", json={
+        "project_id": pid, "title": "Second", "cognitive_load": 2, "estimated_minutes": 60
+    }).json()
+    return t1, t2
+
+
+def test_task_response_includes_dependency_ids(client):
+    t1, t2 = _create_two_tasks(client)
+    r = client.get(f"/api/tasks/{t1['id']}")
+    assert r.status_code == 200
+    assert "dependency_ids" in r.json()
+    assert r.json()["dependency_ids"] == []
+
+
+def test_update_task_sets_dependencies(client):
+    t1, t2 = _create_two_tasks(client)
+    # t2 depends on t1
+    r = client.patch(f"/api/tasks/{t2['id']}", json={"dependency_ids": [t1["id"]]})
+    assert r.status_code == 200
+    assert t1["id"] in r.json()["dependency_ids"]
+
+
+def test_update_task_clears_dependencies(client):
+    t1, t2 = _create_two_tasks(client)
+    client.patch(f"/api/tasks/{t2['id']}", json={"dependency_ids": [t1["id"]]})
+    r = client.patch(f"/api/tasks/{t2['id']}", json={"dependency_ids": []})
+    assert r.status_code == 200
+    assert r.json()["dependency_ids"] == []

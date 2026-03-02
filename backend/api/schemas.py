@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Literal
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 # --- Goal ---
@@ -96,6 +96,7 @@ class TaskUpdate(BaseModel):
     deadline: datetime | None = None
     status: Literal["backlog", "active", "in_progress", "done", "deferred"] | None = None
     recurrence_rule: str | None = None
+    dependency_ids: list[str] | None = None
 
 
 class TaskComplete(BaseModel):
@@ -119,6 +120,18 @@ class TaskResponse(BaseModel):
     recurrence_rule: str | None
     source: str
     created_at: datetime
+    dependency_ids: list[str] = []
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_dependency_ids(cls, data):
+        # When given an ORM object, convert to dict and pull dependency_ids
+        # from the relationship before Pydantic processes it.
+        if hasattr(data, '__table__'):
+            result = {col.name: getattr(data, col.name) for col in data.__table__.columns}
+            result['dependency_ids'] = [d.id for d in getattr(data, 'dependencies', [])]
+            return result
+        return data
 
 
 # --- Schedule ---
