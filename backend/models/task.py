@@ -36,6 +36,7 @@ class Task(Base):
         nullable=False,
         default="manual",
     )
+    external_id: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
     project: Mapped["Project"] = relationship("Project", back_populates="tasks")

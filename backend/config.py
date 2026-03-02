@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     ms_client_id: str = ""
     ms_client_secret: str = ""
     ms_tenant_id: str = ""
+    github_token: str = ""
     github_client_id: str = ""
     github_client_secret: str = ""
 
