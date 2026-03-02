@@ -19,6 +19,7 @@ from backend.api.energy_profile import router as energy_profile_router
 from backend.api.availability import router as availability_router
 from backend.api.github import router as github_router
 from backend.api.user_profile import router as user_profile_router
+from backend.api.whoop import router as whoop_router
 from backend.config import settings
 
 
@@ -59,6 +60,7 @@ app.include_router(energy_profile_router)
 app.include_router(availability_router)
 app.include_router(github_router)
 app.include_router(user_profile_router)
+app.include_router(whoop_router)
 
 
 @app.get("/health")

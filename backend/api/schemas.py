@@ -277,3 +277,10 @@ class UserProfileResponse(BaseModel):
     id: str
     wake_hour: int
     chronotype: str
+
+
+# --- Whoop ---
+
+class WhoopStatusResponse(BaseModel):
+    connected: bool
+    today: dict | None = None  # WhoopDaily fields if synced today
