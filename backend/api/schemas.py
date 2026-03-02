@@ -262,12 +262,22 @@ class AvailabilityResponse(BaseModel):
 class UserProfileUpdate(BaseModel):
     wake_hour: int
     chronotype: Literal["early", "intermediate", "late"]
+    autonomy_level: int = 2
+    planning_time: str = "21:00"
+    planning_auto_lock_minutes: int = 60
 
     @field_validator("wake_hour")
     @classmethod
     def validate_wake_hour(cls, v: int) -> int:
         if not 0 <= v <= 23:
             raise ValueError("wake_hour must be 0–23")
+        return v
+
+    @field_validator("autonomy_level")
+    @classmethod
+    def validate_autonomy_level(cls, v: int) -> int:
+        if not 1 <= v <= 5:
+            raise ValueError("autonomy_level must be 1–5")
         return v
 
 
@@ -277,6 +287,9 @@ class UserProfileResponse(BaseModel):
     id: str
     wake_hour: int
     chronotype: str
+    autonomy_level: int
+    planning_time: str
+    planning_auto_lock_minutes: int
 
 
 # --- Whoop ---

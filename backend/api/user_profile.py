@@ -37,6 +37,9 @@ def update_user_profile(body: UserProfileUpdate, db: Session = Depends(get_db)):
     profile = _get_or_create_profile(db)
     profile.wake_hour = body.wake_hour
     profile.chronotype = body.chronotype
+    profile.autonomy_level = body.autonomy_level
+    profile.planning_time = body.planning_time
+    profile.planning_auto_lock_minutes = body.planning_auto_lock_minutes
     db.commit()
     db.refresh(profile)
     return profile
