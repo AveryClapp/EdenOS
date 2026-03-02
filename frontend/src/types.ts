@@ -122,3 +122,18 @@ export interface EnergyDefault {
   hour_of_day: number
   energy_level: number
 }
+
+export interface WhoopToday {
+  recovery_score: number | null
+  hrv_rms: number | null
+  resting_hr: number | null
+  sleep_quality_score: number | null
+  strain_score: number | null
+  actual_wake_time: string | null
+  recommendation: 'red' | 'yellow' | 'green' | null
+}
+
+export interface WhoopStatus {
+  connected: boolean
+  today: WhoopToday | null
+}

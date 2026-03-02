@@ -6,6 +6,8 @@ import type { UserProfile } from '../types'
 import { listAvailability, createAvailability, deleteAvailability } from '../api/availability'
 import { syncGitHub } from '../api/github'
 import { listProjects } from '../api/projects'
+import { getWhoopStatus, syncWhoop, connectWhoop } from '../api/whoop'
+import type { WhoopStatus } from '../types'
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const ENERGY_COLORS = [
@@ -16,6 +18,98 @@ const ENERGY_COLORS = [
   'text-lime-400',
   'text-emerald-400',
 ]
+
+// ─── Whoop ────────────────────────────────────────────────────────────────────
+
+const RECOVERY_COLORS: Record<string, string> = {
+  green: 'text-emerald-400',
+  yellow: 'text-yellow-400',
+  red: 'text-red-400',
+}
+
+function WhoopSection() {
+  const qc = useQueryClient()
+  const { data: status, isLoading } = useQuery({
+    queryKey: ['whoop-status'],
+    queryFn: getWhoopStatus,
+    refetchInterval: 5 * 60_000,  // refresh every 5 min
+  })
+
+  const { mutate: sync, isPending: syncing } = useMutation({
+    mutationFn: syncWhoop,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['whoop-status'] }),
+  })
+
+  if (isLoading) return <div className="text-zinc-600 text-xs">loading...</div>
+
+  if (!status?.connected) {
+    return (
+      <div className="space-y-2">
+        <p className="text-zinc-600 text-xs">
+          Connect Whoop to automatically adjust your energy profile based on daily recovery score.
+          Requires <code className="text-zinc-400">WHOOP_CLIENT_ID</code> and{' '}
+          <code className="text-zinc-400">WHOOP_CLIENT_SECRET</code> in your{' '}
+          <code className="text-zinc-400">.env</code>.
+        </p>
+        <button
+          onClick={connectWhoop}
+          className="text-xs text-emerald-400 hover:text-emerald-300 border border-zinc-700 px-2 py-0.5 transition-colors"
+        >
+          [ connect whoop ]
+        </button>
+      </div>
+    )
+  }
+
+  const today = status.today
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <span className="text-emerald-600 text-xs">● connected</span>
+        <button
+          onClick={() => sync()}
+          disabled={syncing}
+          className="text-xs text-zinc-600 hover:text-zinc-400 disabled:text-zinc-800 transition-colors"
+        >
+          {syncing ? 'syncing...' : '[ sync now ]'}
+        </button>
+      </div>
+
+      {today ? (
+        <div className="grid grid-cols-3 gap-x-6 gap-y-1 text-xs">
+          <div>
+            <span className="text-zinc-600">recovery </span>
+            <span className={today.recommendation ? RECOVERY_COLORS[today.recommendation] : 'text-zinc-400'}>
+              {today.recovery_score ?? '—'}%
+            </span>
+          </div>
+          <div>
+            <span className="text-zinc-600">hrv </span>
+            <span className="text-zinc-300">{today.hrv_rms?.toFixed(1) ?? '—'}</span>
+          </div>
+          <div>
+            <span className="text-zinc-600">rhr </span>
+            <span className="text-zinc-300">{today.resting_hr ?? '—'}</span>
+          </div>
+          <div>
+            <span className="text-zinc-600">strain </span>
+            <span className="text-zinc-300">{today.strain_score?.toFixed(1) ?? '—'}</span>
+          </div>
+          <div>
+            <span className="text-zinc-600">sleep </span>
+            <span className="text-zinc-300">{today.sleep_quality_score ?? '—'}%</span>
+          </div>
+          <div>
+            <span className="text-zinc-600">woke </span>
+            <span className="text-zinc-300">{today.actual_wake_time ?? '—'}</span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-zinc-700 text-xs">no data for today — sync to fetch</p>
+      )}
+    </div>
+  )
+}
 
 // ─── Chronotype ───────────────────────────────────────────────────────────────
 
@@ -400,6 +494,13 @@ export default function Settings() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-10">
+        <section>
+          <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
+            Whoop
+          </h2>
+          <WhoopSection />
+        </section>
+
         <section>
           <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
             Chronotype
