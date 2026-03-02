@@ -38,6 +38,7 @@ export interface Task {
   estimated_minutes: number
   actual_minutes: number | null
   deadline: string | null
+  recurrence_rule: string | null
   source: string
   created_at: string
 }

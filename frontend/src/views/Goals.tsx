@@ -100,17 +100,24 @@ function GoalRow({
   )
 }
 
-function AddGoalForm({ onDone }: { onDone: () => void }) {
+function AddGoalForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }) {
   const qc = useQueryClient()
   const [title, setTitle] = useState('')
   const [tier, setTier] = useState<'long' | 'mid'>('long')
   const [targetDate, setTargetDate] = useState('')
   const [weight, setWeight] = useState('0.8')
+  const [parentId, setParentId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
-      createGoal({ title, tier, target_date: targetDate, weight: Number(weight) }),
+      createGoal({
+        title,
+        tier,
+        target_date: targetDate,
+        weight: Number(weight),
+        parent_id: parentId || undefined,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['goals'] })
       onDone()
@@ -138,6 +145,16 @@ function AddGoalForm({ onDone }: { onDone: () => void }) {
         >
           <option value="long">long (6–24mo)</option>
           <option value="mid">mid (2–8wk)</option>
+        </select>
+        <select
+          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          value={parentId}
+          onChange={(e) => setParentId(e.target.value)}
+        >
+          <option value="">no parent</option>
+          {goals.map((g) => (
+            <option key={g.id} value={g.id}>{g.title}</option>
+          ))}
         </select>
         <input
           type="date"
@@ -214,7 +231,7 @@ export default function Goals() {
         <span className="w-20" />
       </div>
 
-      {adding && <AddGoalForm onDone={() => setAdding(false)} />}
+      {adding && <AddGoalForm goals={goals} onDone={() => setAdding(false)} />}
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (

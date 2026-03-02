@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getSchedule } from '../api/schedule'
 import { listTasks } from '../api/tasks'
@@ -6,17 +7,20 @@ import type { ScheduleBlock, Task } from '../types'
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
-function getWeekDates(): Date[] {
-  const today = new Date()
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i)
-    return d
-  })
+function offsetDate(base: Date, days: number): Date {
+  const d = new Date(base)
+  d.setDate(base.getDate() + days)
+  return d
 }
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10)
+}
+
+function formatRange(start: Date, end: Date): string {
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
+  return `${fmt(start)} – ${fmt(end)}`
 }
 
 function DayColumn({
@@ -74,10 +78,19 @@ function DayColumn({
 }
 
 export default function Week() {
+  const [weekOffset, setWeekOffset] = useState(0)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const startDate = offsetDate(today, weekOffset * 7)
+  const endDate = offsetDate(startDate, 6)
+  const startStr = isoDate(startDate)
+  const todayStr = isoDate(today)
+
   const { data: schedule } = useQuery({
-    queryKey: ['schedule'],
-    queryFn: getSchedule,
-    refetchInterval: 60_000,
+    queryKey: ['schedule', startStr],
+    queryFn: () => getSchedule(startStr),
+    refetchInterval: weekOffset === 0 ? 60_000 : false,
   })
 
   const { data: tasks = [] } = useQuery({
@@ -86,13 +99,37 @@ export default function Week() {
   })
 
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]))
-  const weekDates = getWeekDates()
-  const todayStr = isoDate(new Date())
+  const weekDates = Array.from({ length: 7 }, (_, i) => offsetDate(startDate, i))
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-3 border-b border-zinc-800 text-sm tracking-widest text-zinc-100 shrink-0">
-        WEEK
+      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0">
+        <span className="text-sm tracking-widest text-zinc-100">WEEK</span>
+        <div className="flex items-center gap-3 text-xs">
+          <button
+            onClick={() => setWeekOffset((n) => n - 1)}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            ‹ prev
+          </button>
+          <span className="text-zinc-500 w-32 text-center">
+            {weekOffset === 0 ? 'this week' : formatRange(startDate, endDate)}
+          </span>
+          <button
+            onClick={() => setWeekOffset((n) => n + 1)}
+            className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            next ›
+          </button>
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              today
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
         {weekDates.map((date) => {

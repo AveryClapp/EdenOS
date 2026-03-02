@@ -37,6 +37,8 @@ function EnergyGrid() {
     setGrid(next)
   }, [profile])
 
+  const [saved, setSaved] = useState(false)
+
   const { mutate: save, isPending } = useMutation({
     mutationFn: () => {
       const entries = []
@@ -47,7 +49,11 @@ function EnergyGrid() {
       }
       return setEnergyProfile(entries)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['energy-profile'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['energy-profile'] })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    },
   })
 
   function cycleCell(day: number, hour: number) {
@@ -64,10 +70,10 @@ function EnergyGrid() {
         <span className="text-zinc-600 text-xs">Click cells to cycle 1–5 (1=low, 5=high energy)</span>
         <button
           onClick={() => save()}
-          disabled={isPending}
+          disabled={isPending || saved}
           className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors"
         >
-          {isPending ? '...' : '[ save ]'}
+          {isPending ? '...' : saved ? '[ saved ✓ ]' : '[ save ]'}
         </button>
       </div>
       <div className="flex text-xs text-zinc-600 mb-0.5">

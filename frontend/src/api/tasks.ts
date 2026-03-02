@@ -12,6 +12,7 @@ export const createTask = (body: {
   description?: string
   deadline?: string
   dependency_ids?: string[]
+  recurrence_rule?: string
 }) => apiFetch<Task>('/tasks', { method: 'POST', body: JSON.stringify(body) })
 
 export const updateTask = (

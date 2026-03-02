@@ -141,7 +141,7 @@ export default function Today() {
 
   const { data: schedule } = useQuery({
     queryKey: ['schedule'],
-    queryFn: getSchedule,
+    queryFn: () => getSchedule(),
     refetchInterval: 60_000,
   })
 

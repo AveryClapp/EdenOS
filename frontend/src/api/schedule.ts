@@ -1,8 +1,8 @@
 import { apiFetch } from './client'
 import type { ScheduleResponse, ScheduleRunResult } from '../types'
 
-export const getSchedule = () =>
-  apiFetch<ScheduleResponse>('/schedule')
+export const getSchedule = (start?: string) =>
+  apiFetch<ScheduleResponse>(start ? `/schedule?start=${start}` : '/schedule')
 
 export const runScheduler = () =>
   apiFetch<ScheduleRunResult>('/schedule/run', { method: 'POST' })
