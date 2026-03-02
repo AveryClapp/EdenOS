@@ -166,9 +166,28 @@ class ChatRequest(BaseModel):
     message: str
 
 
+class ProposedAction(BaseModel):
+    tool_use_id: str
+    name: str
+    input: dict
+    description: str  # human-readable summary
+
+
 class ChatResponse(BaseModel):
     content: str
     reasoning: str
+    proposed_actions: list[ProposedAction] = []
+
+
+class ExecuteActionItem(BaseModel):
+    tool_use_id: str
+    name: str
+    input: dict
+    approved: bool
+
+
+class ExecuteActionsRequest(BaseModel):
+    actions: list[ExecuteActionItem]
 
 
 # --- Energy Profile ---

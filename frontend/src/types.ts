@@ -65,10 +65,18 @@ export interface Alert {
   task_id?: string
 }
 
+export interface ProposedAction {
+  tool_use_id: string
+  name: string
+  input: Record<string, unknown>
+  description: string
+}
+
 export interface ChatMessage {
   role: 'user' | 'eden'
   content: string
   reasoning?: string
+  proposed_actions?: ProposedAction[]
 }
 
 export interface ScheduleRunResult {

@@ -26,7 +26,10 @@ def _setup_db(db):
 
 def _mock_response(text: str):
     msg = MagicMock()
-    msg.content = [MagicMock(text=text)]
+    block = MagicMock()
+    block.type = "text"
+    block.text = text
+    msg.content = [block]
     return msg
 
 

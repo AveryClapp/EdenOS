@@ -1,9 +1,105 @@
 import { useState, useRef, useEffect } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { sendMessage } from '../api/chat'
-import type { ChatMessage } from '../types'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { sendMessage, executeActions } from '../api/chat'
+import type { ChatMessage, ProposedAction } from '../types'
 
-function EdenMessage({ msg }: { msg: ChatMessage }) {
+// --- ActionCards ---
+
+type ApprovalState = Record<string, boolean>  // tool_use_id → approved
+
+function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; messageIndex: number }) {
+  const qc = useQueryClient()
+  const [approval, setApproval] = useState<ApprovalState>(() =>
+    Object.fromEntries(actions.map((a) => [a.tool_use_id, true]))
+  )
+  const [submitted, setSubmitted] = useState(false)
+  const [result, setResult] = useState<{ executed: number; skipped: number } | null>(null)
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () =>
+      executeActions(
+        actions.map((a) => ({
+          tool_use_id: a.tool_use_id,
+          name: a.name,
+          input: a.input,
+          approved: approval[a.tool_use_id] ?? false,
+        }))
+      ),
+    onSuccess: (data) => {
+      setSubmitted(true)
+      setResult(data)
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['schedule'] })
+    },
+  })
+
+  if (submitted && result) {
+    const parts = []
+    if (result.executed > 0) parts.push(`${result.executed} applied`)
+    if (result.skipped > 0) parts.push(`${result.skipped} skipped`)
+    return (
+      <p className="mt-2 text-zinc-600 text-xs">[{parts.join(', ')}]</p>
+    )
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      {actions.map((action) => {
+        const approved = approval[action.tool_use_id] ?? true
+        return (
+          <div
+            key={action.tool_use_id}
+            className={
+              'flex items-center gap-3 px-3 py-2 border text-xs transition-colors ' +
+              (approved
+                ? 'border-zinc-700 bg-zinc-900 text-zinc-200'
+                : 'border-zinc-800 bg-transparent text-zinc-600 line-through')
+            }
+          >
+            <span className="flex-1 font-mono">{action.description}</span>
+            <button
+              onClick={() =>
+                setApproval((prev) => ({ ...prev, [action.tool_use_id]: !prev[action.tool_use_id] }))
+              }
+              className={
+                'shrink-0 text-xs transition-colors ' +
+                (approved
+                  ? 'text-emerald-500 hover:text-zinc-400'
+                  : 'text-zinc-600 hover:text-emerald-500')
+              }
+            >
+              {approved ? '[ ✓ approve ]' : '[ skip ]'}
+            </button>
+          </div>
+        )
+      })}
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          onClick={() => mutate()}
+          disabled={isPending}
+          className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-600 border border-zinc-700 disabled:border-zinc-800 px-2 py-0.5 transition-colors"
+        >
+          {isPending ? 'applying...' : '[ apply ]'}
+        </button>
+        <button
+          onClick={() => {
+            setApproval(Object.fromEntries(actions.map((a) => [a.tool_use_id, false])))
+            mutate()
+          }}
+          disabled={isPending}
+          className="text-xs text-zinc-600 hover:text-zinc-400 disabled:text-zinc-800 transition-colors"
+        >
+          reject all
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// --- Message components ---
+
+function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
   const [showReasoning, setShowReasoning] = useState(false)
 
   return (
@@ -11,7 +107,12 @@ function EdenMessage({ msg }: { msg: ChatMessage }) {
       <div className="flex gap-3 items-start">
         <span className="text-zinc-600 text-xs shrink-0 pt-0.5 w-12">EDEN ›</span>
         <div className="flex-1 min-w-0">
-          <p className="text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+          {msg.content && (
+            <p className="text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+          )}
+          {msg.proposed_actions && msg.proposed_actions.length > 0 && (
+            <ActionCards actions={msg.proposed_actions} messageIndex={index} />
+          )}
           {msg.reasoning && (
             <div className="mt-2">
               <button
@@ -65,7 +166,12 @@ export default function Chat() {
     onSuccess: (data) => {
       setMessages((prev) => [
         ...prev,
-        { role: 'eden', content: data.content, reasoning: data.reasoning },
+        {
+          role: 'eden',
+          content: data.content,
+          reasoning: data.reasoning,
+          proposed_actions: data.proposed_actions,
+        },
       ])
     },
     onError: () => {
@@ -97,7 +203,7 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto px-6">
         {messages.map((msg, i) =>
           msg.role === 'eden' ? (
-            <EdenMessage key={i} msg={msg} />
+            <EdenMessage key={i} msg={msg} index={i} />
           ) : (
             <UserMessage key={i} msg={msg} />
           ),

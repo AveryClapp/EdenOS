@@ -4,7 +4,10 @@ from unittest.mock import MagicMock, patch
 
 def _mock_llm(text: str):
     msg = MagicMock()
-    msg.content = [MagicMock(text=text)]
+    block = MagicMock()
+    block.type = "text"
+    block.text = text
+    msg.content = [block]
     return msg
 
 
