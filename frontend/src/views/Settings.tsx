@@ -7,7 +7,8 @@ import { listAvailability, createAvailability, deleteAvailability } from '../api
 import { syncGitHub } from '../api/github'
 import { listProjects } from '../api/projects'
 import { getWhoopStatus, syncWhoop, connectWhoop } from '../api/whoop'
-import type { WhoopStatus } from '../types'
+import type { WhoopStatus, UserMemory } from '../types'
+import { listMemory, createMemory, deleteMemory } from '../api/memory'
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const ENERGY_COLORS = [
@@ -484,6 +485,174 @@ function GitHubSection() {
   )
 }
 
+// ─── Memory ───────────────────────────────────────────────────────────────────
+
+const CATEGORY_LABELS: Record<UserMemory['category'], string> = {
+  preference: 'preference',
+  constraint: 'constraint',
+  goal_context: 'goal context',
+  personal: 'personal',
+  signal: 'signal',
+}
+
+const CATEGORY_COLORS: Record<UserMemory['category'], string> = {
+  preference: 'text-blue-400',
+  constraint: 'text-yellow-400',
+  goal_context: 'text-emerald-400',
+  personal: 'text-purple-400',
+  signal: 'text-red-400',
+}
+
+function MemorySection() {
+  const qc = useQueryClient()
+  const [newContent, setNewContent] = useState('')
+  const [newCategory, setNewCategory] = useState<UserMemory['category']>('preference')
+  const [adding, setAdding] = useState(false)
+
+  const { data: memories = [], isLoading } = useQuery({
+    queryKey: ['memory'],
+    queryFn: listMemory,
+  })
+
+  const { mutate: add, isPending: saving } = useMutation({
+    mutationFn: () => createMemory({ category: newCategory, content: newContent }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['memory'] })
+      setNewContent('')
+      setAdding(false)
+    },
+  })
+
+  const { mutate: remove } = useMutation({
+    mutationFn: deleteMemory,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['memory'] }),
+  })
+
+  if (isLoading) return <div className="text-zinc-700 text-xs">loading...</div>
+
+  return (
+    <div className="space-y-3">
+      <p className="text-zinc-600 text-xs">
+        Facts Eden has learned about you from conversations. Edit or remove anything incorrect.
+      </p>
+
+      {memories.length === 0 && (
+        <p className="text-zinc-800 text-xs">No memories yet — Eden learns from your chat conversations.</p>
+      )}
+
+      <div className="space-y-1">
+        {memories.map((m) => (
+          <div key={m.id} className="flex items-start gap-2 text-xs py-1 border-b border-zinc-900">
+            <span className={`shrink-0 w-24 ${CATEGORY_COLORS[m.category as UserMemory['category']] ?? 'text-zinc-500'}`}>
+              {CATEGORY_LABELS[m.category as UserMemory['category']] ?? m.category}
+            </span>
+            <span className="flex-1 text-zinc-400">{m.content}</span>
+            <button
+              onClick={() => remove(m.id)}
+              className="text-zinc-800 hover:text-red-600 shrink-0 transition-colors"
+              title="Delete"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {adding ? (
+        <div className="space-y-2">
+          <select
+            value={newCategory}
+            onChange={e => setNewCategory(e.target.value as UserMemory['category'])}
+            className="bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs px-2 py-1 w-full outline-none"
+          >
+            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+          <input
+            className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs px-2 py-1 outline-none focus:border-zinc-600"
+            placeholder="e.g. prefers not to schedule admin before 10am"
+            value={newContent}
+            onChange={e => setNewContent(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && newContent.trim() && add()}
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => newContent.trim() && add()}
+              disabled={saving || !newContent.trim()}
+              className="text-xs text-emerald-500 hover:text-emerald-400 disabled:text-zinc-800 transition-colors"
+            >
+              [ save ]
+            </button>
+            <button
+              onClick={() => setAdding(false)}
+              className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+            >
+              [ cancel ]
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setAdding(true)}
+          className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+        >
+          [ + add manually ]
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── Autonomy ─────────────────────────────────────────────────────────────────
+
+const AUTONOMY_LABELS: Record<number, string> = {
+  1: '1 — Full AI (auto-schedules, auto-locks)',
+  2: '2 — AI with light review (default)',
+  3: '3 — Collaborative (you must lock in)',
+  4: '4 — User-led (AI fills gaps only)',
+  5: '5 — Manual (AI responds when asked)',
+}
+
+function AutonomySection() {
+  const qc = useQueryClient()
+  const { data: profile } = useQuery({ queryKey: ['user-profile'], queryFn: getUserProfile })
+  const { mutate: save } = useMutation({
+    mutationFn: (level: number) =>
+      updateUserProfile({
+        wake_hour: profile?.wake_hour ?? 7,
+        chronotype: profile?.chronotype ?? 'intermediate',
+        autonomy_level: level,
+        planning_time: profile?.planning_time ?? '21:00',
+        planning_auto_lock_minutes: profile?.planning_auto_lock_minutes ?? 60,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user-profile'] }),
+  })
+
+  return (
+    <div className="space-y-2">
+      <p className="text-zinc-600 text-xs">
+        Controls how proactively Eden schedules and nudges. Change any time.
+      </p>
+      <div className="space-y-1">
+        {Object.entries(AUTONOMY_LABELS).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => save(Number(k))}
+            className={`block w-full text-left text-xs py-1.5 px-2 transition-colors ${
+              profile?.autonomy_level === Number(k)
+                ? 'text-zinc-200 bg-zinc-800'
+                : 'text-zinc-600 hover:text-zinc-400'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Settings View ────────────────────────────────────────────────────────────
 
 export default function Settings() {
@@ -527,6 +696,20 @@ export default function Settings() {
             Integrations
           </h2>
           <GitHubSection />
+        </section>
+
+        <section>
+          <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
+            Autonomy
+          </h2>
+          <AutonomySection />
+        </section>
+
+        <section>
+          <h2 className="text-xs text-zinc-500 tracking-widest uppercase mb-3 pb-1 border-b border-zinc-800">
+            Memory
+          </h2>
+          <MemorySection />
         </section>
       </div>
     </div>
