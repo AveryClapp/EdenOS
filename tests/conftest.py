@@ -10,6 +10,7 @@ import backend.models.energy_profile  # noqa: F401
 import backend.models.schedule_block  # noqa: F401
 import backend.models.learning_record  # noqa: F401
 import backend.models.availability_window  # noqa: F401
+import backend.models.user_memory  # noqa: F401
 
 
 @pytest.fixture()

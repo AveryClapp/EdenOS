@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
@@ -155,6 +155,7 @@ def _execute_tool(name: str, inp: dict, db: Session) -> None:
 @router.post("", response_model=ChatResponse)
 def chat(
     body: ChatRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     eden: EdenClient = Depends(get_eden_client),
 ):
@@ -172,11 +173,25 @@ def chat(
             )
         )
 
-    return ChatResponse(
+    response = ChatResponse(
         content=result.get("content", ""),
         reasoning=result.get("reasoning", ""),
         proposed_actions=proposed,
     )
+
+    from backend.db import SessionLocal
+
+    def _extract(user_msg: str, eden_msg: str):
+        _db = SessionLocal()
+        try:
+            from backend.intelligence.memory import extract_memories_from_conversation
+            extract_memories_from_conversation(user_msg, eden_msg, _db)
+        finally:
+            _db.close()
+
+    background_tasks.add_task(_extract, body.message, response.content)
+
+    return response
 
 
 @router.post("/actions/execute")
