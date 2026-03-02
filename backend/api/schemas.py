@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 # --- Goal ---
@@ -242,3 +242,25 @@ class AvailabilityResponse(BaseModel):
     end_time: time
     is_available: bool
     note: str | None
+
+
+# --- User Profile ---
+
+class UserProfileUpdate(BaseModel):
+    wake_hour: int
+    chronotype: Literal["early", "intermediate", "late"]
+
+    @field_validator("wake_hour")
+    @classmethod
+    def validate_wake_hour(cls, v: int) -> int:
+        if not 0 <= v <= 23:
+            raise ValueError("wake_hour must be 0–23")
+        return v
+
+
+class UserProfileResponse(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: str
+    wake_hour: int
+    chronotype: str
