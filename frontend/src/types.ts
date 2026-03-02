@@ -109,3 +109,15 @@ export interface AvailabilityWindow {
   is_available: boolean
   note: string | null
 }
+
+export interface UserProfile {
+  id: string
+  wake_hour: number
+  chronotype: 'early' | 'intermediate' | 'late'
+}
+
+export interface EnergyDefault {
+  day_of_week: number
+  hour_of_day: number
+  energy_level: number
+}
