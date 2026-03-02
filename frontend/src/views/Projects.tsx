@@ -50,15 +50,41 @@ const STATUS_NEXT_LABEL: Record<string, string> = {
 function TaskRow({ task }: { task: Task }) {
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState(task.title)
+  const [editDesc, setEditDesc] = useState(task.description ?? '')
+  const [editMins, setEditMins] = useState(String(task.estimated_minutes))
 
   const { mutate: advance } = useMutation({
     mutationFn: (status: string) => updateTask(task.id, { status: status as Task['status'] }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
   })
 
+  const { mutate: save } = useMutation({
+    mutationFn: () =>
+      updateTask(task.id, {
+        title: editTitle,
+        description: editDesc || null,
+        estimated_minutes: Number(editMins),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setEditing(false)
+    },
+  })
+
+  function openEdit(e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditTitle(task.title)
+    setEditDesc(task.description ?? '')
+    setEditMins(String(task.estimated_minutes))
+    setEditing(true)
+    setExpanded(true)
+  }
+
   return (
     <div className="border-b border-zinc-900">
-      <div className="flex items-center gap-3 px-4 py-1.5 text-xs hover:bg-zinc-900 transition-colors">
+      <div className="flex items-center gap-3 px-4 py-1.5 text-xs hover:bg-zinc-900 transition-colors group">
         <button
           className={`w-20 shrink-0 text-left ${TASK_STATUS_COLORS[task.status]} hover:opacity-70 transition-opacity`}
           onClick={() => advance(STATUS_NEXT[task.status])}
@@ -80,8 +106,15 @@ function TaskRow({ task }: { task: Task }) {
         {task.recurrence_rule && (
           <span className="text-zinc-700 shrink-0">↻</span>
         )}
+        <button
+          className="text-zinc-700 hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          onClick={openEdit}
+          title="edit task"
+        >
+          ✎
+        </button>
       </div>
-      {expanded && (
+      {expanded && !editing && (
         <div className="px-4 pb-2 pt-1 bg-zinc-900 text-xs space-y-1">
           {task.description ? (
             <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap">{task.description}</p>
@@ -92,6 +125,42 @@ function TaskRow({ task }: { task: Task }) {
             {task.deadline && <span>deadline: <span className="text-amber-600">{task.deadline.slice(0, 10)}</span></span>}
             {task.recurrence_rule && <span>recurs: <span className="text-zinc-400">{task.recurrence_rule}</span></span>}
             <span>source: {task.source}</span>
+          </div>
+        </div>
+      )}
+      {editing && (
+        <div className="px-4 pb-2 pt-1.5 bg-zinc-900 text-xs space-y-1.5 border-t border-zinc-800">
+          <input
+            autoFocus
+            className="w-full bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setEditing(false) }}
+          />
+          <textarea
+            className="w-full bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-1 font-mono text-xs resize-none"
+            rows={2}
+            placeholder="description (optional)"
+            value={editDesc}
+            onChange={(e) => setEditDesc(e.target.value)}
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-600">mins</span>
+            <input
+              className="w-16 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-0.5 font-mono text-xs"
+              value={editMins}
+              onChange={(e) => setEditMins(e.target.value)}
+            />
+            <button
+              onClick={() => save()}
+              disabled={!editTitle}
+              className="text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors ml-auto"
+            >
+              [ save ]
+            </button>
+            <button onClick={() => setEditing(false)} className="text-zinc-600 hover:text-zinc-400 transition-colors">
+              cancel
+            </button>
           </div>
         </div>
       )}
@@ -233,16 +302,29 @@ function ProjectCard({
         <span className={`text-xs w-16 text-right shrink-0 ${STATUS_COLORS[project.status]}`}>
           [{project.status}]
         </span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-10 justify-end shrink-0">
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-20 justify-end shrink-0">
           {project.status === 'active' && (
+            <>
+              <button
+                className="text-zinc-500 hover:text-zinc-300"
+                onClick={(e) => { e.stopPropagation(); patch({ status: 'paused' }) }}
+              >
+                pause
+              </button>
+              <button
+                className="text-zinc-500 hover:text-zinc-300"
+                onClick={(e) => { e.stopPropagation(); patch({ status: 'done' }) }}
+              >
+                done
+              </button>
+            </>
+          )}
+          {project.status === 'paused' && (
             <button
-              className="text-zinc-500 hover:text-zinc-300"
-              onClick={(e) => {
-                e.stopPropagation()
-                patch({ status: 'done' })
-              }}
+              className="text-yellow-600 hover:text-yellow-400"
+              onClick={(e) => { e.stopPropagation(); patch({ status: 'active' }) }}
             >
-              done
+              resume
             </button>
           )}
         </div>

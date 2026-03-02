@@ -19,7 +19,7 @@ export const updateTask = (
   id: string,
   body: Partial<{
     title: string
-    description: string
+    description: string | null
     cognitive_load: number
     estimated_minutes: number
     deadline: string | null

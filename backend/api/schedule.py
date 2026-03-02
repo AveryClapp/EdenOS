@@ -9,6 +9,7 @@ from backend.models.schedule_block import ScheduleBlock
 from backend.models.energy_profile import EnergyProfile
 from backend.models.availability_window import AvailabilityWindow
 from backend.scheduler.engine import SchedulerEngine
+from backend.scheduler.priority import recompute_all_priorities
 from backend.api.schemas import ScheduleOverride, ScheduleRunResponse
 
 router = APIRouter(prefix="/api/schedule", tags=["schedule"])
@@ -92,6 +93,7 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         db.add(block)
 
     db.commit()
+    recompute_all_priorities(db, now=now)
     return ScheduleRunResponse(blocks_cleared=deleted, blocks_created=len(results))
 
 
