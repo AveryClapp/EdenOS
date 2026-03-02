@@ -159,7 +159,29 @@ def chat(
     db: Session = Depends(get_db),
     eden: EdenClient = Depends(get_eden_client),
 ):
-    result = eden.chat(body.message, db)
+    if body.mode == "planning":
+        from backend.models.schedule_block import ScheduleBlock as SB
+        from datetime import date as _date
+
+        plan_date = body.planning_date or _date.today()
+        draft_blocks = db.query(SB).filter(
+            SB.date == plan_date,
+            SB.is_draft == True,
+        ).all()
+        draft_summary = [
+            {"id": b.id, "task_id": b.task_id,
+             "start_time": str(b.start_time), "end_time": str(b.end_time)}
+            for b in draft_blocks
+        ]
+
+        result = eden.chat_planning(
+            message=body.message,
+            draft_blocks=draft_summary,
+            plan_date=str(plan_date),
+            db=db,
+        )
+    else:
+        result = eden.chat(body.message, db)
 
     proposed: list[ProposedAction] = []
     for tu in result.get("tool_uses", []):

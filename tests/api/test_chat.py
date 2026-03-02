@@ -42,3 +42,28 @@ def test_chat_handles_plain_text_response(client):
         data = r.json()
         assert "content" in data
         assert "reasoning" in data
+
+
+def test_planning_chat_mode_accepted(client):
+    from unittest.mock import patch, MagicMock
+    import json
+
+    reply = json.dumps({"reasoning": "Moving block", "content": "Done, moved to 10am."})
+    with patch("backend.intelligence.client.anthropic.Anthropic") as MockAnthropic:
+        mock_client = MagicMock()
+        MockAnthropic.return_value = mock_client
+        block = MagicMock()
+        block.type = "text"
+        block.text = reply
+        mock_msg = MagicMock()
+        mock_msg.content = [block]
+        mock_msg.stop_reason = "end_turn"
+        mock_client.messages.create.return_value = mock_msg
+
+        r = client.post("/api/chat/", json={
+            "message": "Move the first block to 10am",
+            "mode": "planning",
+            "planning_date": str(__import__('datetime').date.today()),
+        })
+
+    assert r.status_code == 200

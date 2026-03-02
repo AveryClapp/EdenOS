@@ -177,6 +177,8 @@ class PlanDayResponse(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    mode: Literal["chat", "planning"] = "chat"
+    planning_date: date | None = None
 
 
 class ProposedAction(BaseModel):

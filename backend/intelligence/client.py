@@ -94,6 +94,92 @@ class EdenClient:
         except json.JSONDecodeError:
             return {"actions": [], "summary": raw, "reasoning": ""}
 
+    def chat_planning(self, message: str, draft_blocks: list, plan_date: str, db) -> dict:
+        from backend.intelligence.prompts import PLANNING_TOOLS, PLAN_GENERATION_PROMPT
+        from backend.intelligence.context import build_context_snapshot
+        import json
+
+        snapshot = build_context_snapshot(db)
+        context_str = json.dumps(snapshot, default=str, indent=2)
+
+        user_content = f"""<context>
+{context_str}
+</context>
+
+Current draft schedule for {plan_date}:
+{json.dumps(draft_blocks)}
+
+User request: {message}"""
+
+        msg = self._client.messages.create(
+            model="claude-opus-4-6",
+            max_tokens=1024,
+            system=PLAN_GENERATION_PROMPT,
+            tools=PLANNING_TOOLS,
+            messages=[{"role": "user", "content": user_content}],
+        )
+
+        content = ""
+        tool_uses = []
+        for block in msg.content:
+            if block.type == "text":
+                content = block.text
+            elif block.type == "tool_use":
+                tool_uses.append({"id": block.id, "name": block.name, "input": block.input})
+
+        # Execute planning tool actions directly (no approval needed in planning mode)
+        self._execute_planning_tools(tool_uses, plan_date, db)
+
+        return {"content": content, "reasoning": "", "tool_uses": tool_uses}
+
+    def _execute_planning_tools(self, tool_uses: list, plan_date: str, db) -> None:
+        import uuid
+        from datetime import time, date as _date
+        from backend.models.schedule_block import ScheduleBlock
+
+        target_date = _date.fromisoformat(plan_date)
+
+        for tu in tool_uses:
+            name = tu["name"]
+            inp = tu["input"]
+
+            if name == "move_block":
+                block = db.get(ScheduleBlock, inp["block_id"])
+                if block and block.is_draft:
+                    h, m = inp["new_start_time"].split(":")
+                    block.start_time = time(int(h), int(m))
+                    h, m = inp["new_end_time"].split(":")
+                    block.end_time = time(int(h), int(m))
+
+            elif name == "add_block":
+                h, m = inp["start_time"].split(":")
+                st = time(int(h), int(m))
+                h, m = inp["end_time"].split(":")
+                et = time(int(h), int(m))
+                block = ScheduleBlock(
+                    id=str(uuid.uuid4()),
+                    task_id=inp.get("task_id"),
+                    date=target_date,
+                    start_time=st,
+                    end_time=et,
+                    auto_generated=True,
+                    overridden_by_user=False,
+                    is_draft=True,
+                )
+                db.add(block)
+
+            elif name == "remove_block":
+                block = db.get(ScheduleBlock, inp["block_id"])
+                if block and block.is_draft:
+                    db.delete(block)
+
+            elif name == "replace_task":
+                block = db.get(ScheduleBlock, inp["block_id"])
+                if block and block.is_draft:
+                    block.task_id = inp["new_task_id"]
+
+        db.commit()
+
     def get_alerts(self, db: Session, now=None) -> list[dict]:
         """
         Return proactive alerts from the context snapshot.
