@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listGoals } from '../api/goals'
 import { listProjects, createProject, updateProject } from '../api/projects'
-import { listTasks, createTask } from '../api/tasks'
+import { listTasks, createTask, updateTask } from '../api/tasks'
 import LoadDots from '../components/LoadDots'
 import type { Goal, Project, Task } from '../types'
 
@@ -30,10 +30,32 @@ const TASK_STATUS_COLORS: Record<string, string> = {
   deferred: 'text-zinc-700',
 }
 
+const STATUS_NEXT: Record<string, string> = {
+  backlog: 'active',
+  active: 'in_progress',
+  in_progress: 'deferred',
+  deferred: 'backlog',
+  done: 'backlog',
+}
+
 function TaskRow({ task }: { task: Task }) {
+  const qc = useQueryClient()
+
+  const { mutate: advance } = useMutation({
+    mutationFn: (status: string) => updateTask(task.id, { status: status as Task['status'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),
+  })
+
   return (
     <div className="flex items-center gap-3 px-4 py-1.5 text-xs border-b border-zinc-900 hover:bg-zinc-900 transition-colors">
-      <span className={`w-16 shrink-0 ${TASK_STATUS_COLORS[task.status]}`}>{task.status}</span>
+      <button
+        className={`w-16 shrink-0 text-left ${TASK_STATUS_COLORS[task.status]} hover:opacity-70 transition-opacity disabled:cursor-default`}
+        onClick={() => advance(STATUS_NEXT[task.status])}
+        disabled={task.status === 'done'}
+        title="Click to advance status"
+      >
+        {task.status}
+      </button>
       <span
         className={`flex-1 ${task.status === 'done' ? 'line-through text-zinc-600' : 'text-zinc-200'}`}
       >
@@ -53,6 +75,7 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
   const [title, setTitle] = useState('')
   const [load, setLoad] = useState('2')
   const [mins, setMins] = useState('60')
+  const [error, setError] = useState<string | null>(null)
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
@@ -66,6 +89,7 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
       qc.invalidateQueries({ queryKey: ['tasks'] })
       onDone()
     },
+    onError: (e: Error) => setError(e.message),
   })
 
   return (
@@ -106,6 +130,7 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
       <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
         cancel
       </button>
+      {error && <span className="text-red-500 text-xs">[{error}]</span>}
     </div>
   )
 }
@@ -204,6 +229,7 @@ function AddProjectForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }
   const [goalId, setGoalId] = useState(goals[0]?.id ?? '')
   const [category, setCategory] = useState('engineering')
   const [hours, setHours] = useState('10')
+  const [error, setError] = useState<string | null>(null)
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
@@ -217,6 +243,7 @@ function AddProjectForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }
       qc.invalidateQueries({ queryKey: ['projects'] })
       onDone()
     },
+    onError: (e: Error) => setError(e.message),
   })
 
   return (
@@ -270,6 +297,7 @@ function AddProjectForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }
         <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
           cancel
         </button>
+        {error && <span className="text-red-500 text-xs">[{error}]</span>}
       </div>
     </div>
   )

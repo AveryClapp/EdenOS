@@ -106,6 +106,7 @@ function AddGoalForm({ onDone }: { onDone: () => void }) {
   const [tier, setTier] = useState<'long' | 'mid'>('long')
   const [targetDate, setTargetDate] = useState('')
   const [weight, setWeight] = useState('0.8')
+  const [error, setError] = useState<string | null>(null)
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
@@ -114,6 +115,7 @@ function AddGoalForm({ onDone }: { onDone: () => void }) {
       qc.invalidateQueries({ queryKey: ['goals'] })
       onDone()
     },
+    onError: (e: Error) => setError(e.message),
   })
 
   return (
@@ -159,6 +161,7 @@ function AddGoalForm({ onDone }: { onDone: () => void }) {
         <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
           cancel
         </button>
+        {error && <span className="text-red-500 text-xs">[{error}]</span>}
       </div>
     </div>
   )

@@ -27,6 +27,7 @@ function CompleteForm({
   const [mins, setMins] = useState(String(task.estimated_minutes))
   const [quality, setQuality] = useState('3')
   const [energy, setEnergy] = useState('3')
+  const [error, setError] = useState<string | null>(null)
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
@@ -40,6 +41,7 @@ function CompleteForm({
       qc.invalidateQueries({ queryKey: ['tasks'] })
       onDone()
     },
+    onError: (e: Error) => setError(e.message),
   })
 
   return (
@@ -78,6 +80,7 @@ function CompleteForm({
       <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
         cancel
       </button>
+      {error && <span className="text-red-500 text-xs ml-2">[{error}]</span>}
     </div>
   )
 }
