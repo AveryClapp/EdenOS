@@ -44,8 +44,8 @@ def get_schedule(db: Session = Depends(get_db)):
     }
 
 
-@router.post("/run", response_model=ScheduleRunResponse)
-def run_scheduler(db: Session = Depends(get_db)):
+def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
+    """Core scheduler logic — callable from both the route and the background loop."""
     now = datetime.utcnow()
     start_date = date.today()
 
@@ -69,14 +69,12 @@ def run_scheduler(db: Session = Depends(get_db)):
         start_date=start_date,
     )
 
-    # Clear existing auto-generated blocks (never touch overridden ones)
     deleted = db.query(ScheduleBlock).filter(
         ScheduleBlock.auto_generated == True,
         ScheduleBlock.overridden_by_user == False,
     ).delete(synchronize_session=False)
     db.flush()
 
-    # Persist new blocks
     for result in results:
         block = ScheduleBlock(
             id=str(uuid.uuid4()),
@@ -90,8 +88,12 @@ def run_scheduler(db: Session = Depends(get_db)):
         db.add(block)
 
     db.commit()
-
     return ScheduleRunResponse(blocks_cleared=deleted, blocks_created=len(results))
+
+
+@router.post("/run", response_model=ScheduleRunResponse)
+def run_scheduler(db: Session = Depends(get_db)):
+    return _run_scheduler_job(db)
 
 
 @router.post("/override", status_code=201)
