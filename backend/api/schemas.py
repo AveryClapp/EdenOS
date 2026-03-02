@@ -284,3 +284,24 @@ class UserProfileResponse(BaseModel):
 class WhoopStatusResponse(BaseModel):
     connected: bool
     today: dict | None = None  # WhoopDaily fields if synced today
+
+
+# --- Memory ---
+
+class MemoryCreate(BaseModel):
+    category: Literal["preference", "constraint", "goal_context", "personal", "signal"]
+    content: str
+    confidence: float = 1.0
+
+class MemoryUpdate(BaseModel):
+    is_active: bool
+
+class MemoryResponse(BaseModel):
+    model_config = {"from_attributes": True}
+    id: str
+    category: str
+    content: str
+    confidence: float
+    source: str
+    created_at: datetime
+    is_active: bool
