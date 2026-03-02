@@ -76,6 +76,14 @@ export interface ScheduleRunResult {
   blocks_created: number
 }
 
+export interface PlanDayResult {
+  summary: string
+  reasoning: string
+  created_projects: number
+  created_tasks: number
+  blocks_created: number
+}
+
 export interface EnergyProfileEntry {
   id: string
   hour_of_day: number

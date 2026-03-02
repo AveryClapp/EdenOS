@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
+from backend.models.goal import Goal
+from backend.models.project import Project
 from backend.models.task import Task
 from backend.models.schedule_block import ScheduleBlock
 from backend.models.energy_profile import EnergyProfile
@@ -11,7 +13,8 @@ from backend.models.availability_window import AvailabilityWindow
 from backend.models.learning_record import LearningRecord
 from backend.scheduler.engine import SchedulerEngine
 from backend.scheduler.priority import recompute_all_priorities
-from backend.api.schemas import ScheduleOverride, ScheduleRunResponse
+from backend.intelligence.client import EdenClient
+from backend.api.schemas import ScheduleOverride, ScheduleRunResponse, PlanDayRequest, PlanDayResponse
 
 router = APIRouter(prefix="/api/schedule", tags=["schedule"])
 _engine = SchedulerEngine()
@@ -114,6 +117,95 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
 @router.post("/run", response_model=ScheduleRunResponse)
 def run_scheduler(db: Session = Depends(get_db)):
     return _run_scheduler_job(db)
+
+
+@router.post("/plan-day", response_model=PlanDayResponse)
+def plan_day(body: PlanDayRequest, db: Session = Depends(get_db)):
+    if not body.intent.strip():
+        raise HTTPException(status_code=400, detail="intent is required")
+
+    eden = EdenClient()
+    plan = eden.plan_day(body.intent.strip(), db)
+
+    created_projects = 0
+    created_tasks = 0
+
+    for action in plan.get("actions", []):
+        action_type = action.get("type")
+
+        if action_type == "use_existing_project":
+            project = db.query(Project).filter(Project.id == action.get("project_id")).first()
+            if not project:
+                continue
+            for t in action.get("tasks", []):
+                db.add(Task(
+                    id=str(uuid.uuid4()),
+                    project_id=project.id,
+                    title=t["title"],
+                    description=t.get("description"),
+                    cognitive_load=t.get("cognitive_load", 2),
+                    estimated_minutes=t.get("estimated_minutes", 60),
+                    source="manual",
+                    status="active",
+                    created_at=datetime.utcnow(),
+                ))
+                created_tasks += 1
+
+        elif action_type == "create_project":
+            goal_id = action.get("goal_id")
+            if not goal_id:
+                goal = db.query(Goal).filter(Goal.status == "active").first()
+                if not goal:
+                    goal = Goal(
+                        id=str(uuid.uuid4()),
+                        title="General",
+                        tier="long",
+                        weight=1.0,
+                        target_date=(datetime.utcnow() + timedelta(days=365)).date(),
+                        status="active",
+                        created_at=datetime.utcnow(),
+                    )
+                    db.add(goal)
+                    db.flush()
+                goal_id = goal.id
+
+            project = Project(
+                id=str(uuid.uuid4()),
+                title=action["title"],
+                category=action.get("category", "personal"),
+                goal_id=goal_id,
+                priority_score=0.0,
+                status="active",
+                estimated_hours_remaining=float(action.get("estimated_hours", 10)),
+            )
+            db.add(project)
+            db.flush()
+            created_projects += 1
+
+            for t in action.get("tasks", []):
+                db.add(Task(
+                    id=str(uuid.uuid4()),
+                    project_id=project.id,
+                    title=t["title"],
+                    description=t.get("description"),
+                    cognitive_load=t.get("cognitive_load", 2),
+                    estimated_minutes=t.get("estimated_minutes", 60),
+                    source="manual",
+                    status="active",
+                    created_at=datetime.utcnow(),
+                ))
+                created_tasks += 1
+
+    db.commit()
+    schedule_result = _run_scheduler_job(db)
+
+    return PlanDayResponse(
+        summary=plan.get("summary", "Plan created."),
+        reasoning=plan.get("reasoning", ""),
+        created_projects=created_projects,
+        created_tasks=created_tasks,
+        blocks_created=schedule_result.blocks_created,
+    )
 
 
 @router.post("/override", status_code=201)

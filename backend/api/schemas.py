@@ -148,6 +148,18 @@ class ScheduleRunResponse(BaseModel):
     blocks_created: int
 
 
+class PlanDayRequest(BaseModel):
+    intent: str
+
+
+class PlanDayResponse(BaseModel):
+    summary: str
+    reasoning: str
+    created_projects: int
+    created_tasks: int
+    blocks_created: int
+
+
 # --- Chat ---
 
 class ChatRequest(BaseModel):

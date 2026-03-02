@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSchedule, runScheduler } from '../api/schedule'
+import { getSchedule, runScheduler, planDay } from '../api/schedule'
 import { listTasks, completeTask } from '../api/tasks'
 import AlertStrip from '../components/AlertStrip'
 import LoadDots from '../components/LoadDots'
-import type { ScheduleBlock, Task } from '../types'
+import type { ScheduleBlock, Task, PlanDayResult } from '../types'
 
 function formatDate(d: Date): string {
   return d
@@ -138,6 +138,8 @@ function BlockRow({ block, task }: { block: ScheduleBlock; task?: Task }) {
 
 export default function Today() {
   const qc = useQueryClient()
+  const [intent, setIntent] = useState('')
+  const [planResult, setPlanResult] = useState<PlanDayResult | null>(null)
 
   const { data: schedule } = useQuery({
     queryKey: ['schedule'],
@@ -157,6 +159,17 @@ export default function Today() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['schedule'] }),
   })
 
+  const { mutate: plan, isPending: planning } = useMutation({
+    mutationFn: () => planDay(intent.trim()),
+    onSuccess: (data) => {
+      setPlanResult(data)
+      setIntent('')
+      qc.invalidateQueries({ queryKey: ['schedule'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: ['projects'] })
+    },
+  })
+
   const todayBlocks = schedule?.today ?? []
 
   return (
@@ -167,10 +180,43 @@ export default function Today() {
         <button
           onClick={() => runSched()}
           disabled={running}
-          className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-700 hover:border-zinc-500 px-2 py-0.5 transition-colors disabled:text-zinc-700 disabled:border-zinc-800"
+          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors disabled:text-zinc-800"
         >
-          {running ? 'running...' : 'run scheduler'}
+          {running ? 'running...' : 're-run scheduler'}
         </button>
+      </div>
+
+      {/* Intent input */}
+      <div className="px-6 py-3 border-b border-zinc-800 shrink-0">
+        <div className="flex items-center gap-3">
+          <input
+            className="flex-1 bg-transparent text-zinc-100 text-sm font-mono outline-none placeholder:text-zinc-700"
+            placeholder="What do you want to work on today?"
+            value={intent}
+            onChange={(e) => setIntent(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && intent.trim() && !planning) plan() }}
+            disabled={planning}
+          />
+          <button
+            onClick={() => plan()}
+            disabled={planning || !intent.trim()}
+            className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 border border-zinc-700 disabled:border-zinc-800 px-2 py-0.5 transition-colors shrink-0"
+          >
+            {planning ? 'planning...' : '[ plan ]'}
+          </button>
+        </div>
+        {planResult && (
+          <div className="mt-2 space-y-0.5">
+            <p className="text-zinc-400 text-xs">{planResult.summary}</p>
+            <p className="text-zinc-600 text-xs">
+              {[
+                planResult.created_projects > 0 && `${planResult.created_projects} project${planResult.created_projects !== 1 ? 's' : ''} created`,
+                planResult.created_tasks > 0 && `${planResult.created_tasks} task${planResult.created_tasks !== 1 ? 's' : ''} added`,
+                `${planResult.blocks_created} block${planResult.blocks_created !== 1 ? 's' : ''} scheduled`,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Alerts */}

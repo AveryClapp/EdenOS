@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.intelligence.context import build_context_snapshot
-from backend.intelligence.prompts import SYSTEM_PROMPT, format_chat_prompt
+from backend.intelligence.prompts import SYSTEM_PROMPT, PLAN_DAY_SYSTEM_PROMPT, format_chat_prompt, format_plan_day_prompt
 
 
 class EdenClient:
@@ -50,6 +50,32 @@ class EdenClient:
             return parsed
         except json.JSONDecodeError:
             return {"content": raw, "reasoning": ""}
+
+    def plan_day(self, intent: str, db: Session, now=None) -> dict:
+        """
+        Parse user's daily intent and return structured actions (create/use projects+tasks).
+        Does NOT execute the actions — caller handles DB writes.
+        """
+        snapshot = build_context_snapshot(db, now=now)
+        prompt = format_plan_day_prompt(intent, snapshot)
+
+        response = self._client.messages.create(
+            model=settings.llm_model,
+            max_tokens=4096,
+            system=PLAN_DAY_SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        raw = response.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1]
+            if raw.endswith("```"):
+                raw = raw[: raw.rfind("```")]
+            raw = raw.strip()
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return {"actions": [], "summary": raw, "reasoning": ""}
 
     def get_alerts(self, db: Session, now=None) -> list[dict]:
         """
