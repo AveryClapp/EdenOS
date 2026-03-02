@@ -13,6 +13,9 @@ export const createGoal = (body: {
   parent_id?: string
 }) => apiFetch<Goal>('/goals', { method: 'POST', body: JSON.stringify(body) })
 
+export const deleteGoal = (id: string) =>
+  apiFetch<void>(`/goals/${id}`, { method: 'DELETE' })
+
 export const updateGoal = (
   id: string,
   body: Partial<{

@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { listGoals } from '../api/goals'
 import { listProjects, createProject, updateProject } from '../api/projects'
-import { listTasks, createTask, updateTask } from '../api/tasks'
+import { listTasks, createTask, updateTask, deleteTask } from '../api/tasks'
+import { deleteProject } from '../api/projects'
 import LoadDots from '../components/LoadDots'
 import type { Goal, Project, Task } from '../types'
 
@@ -70,6 +71,14 @@ function TaskRow({ task }: { task: Task }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       setEditing(false)
+    },
+  })
+
+  const { mutate: remove } = useMutation({
+    mutationFn: () => deleteTask(task.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: ['projects'] })
     },
   })
 
@@ -160,6 +169,12 @@ function TaskRow({ task }: { task: Task }) {
             </button>
             <button onClick={() => setEditing(false)} className="text-zinc-600 hover:text-zinc-400 transition-colors">
               cancel
+            </button>
+            <button
+              onClick={() => { if (confirm(`Delete "${task.title}"?`)) remove() }}
+              className="text-zinc-700 hover:text-red-500 transition-colors"
+            >
+              delete
             </button>
           </div>
         </div>
@@ -276,6 +291,14 @@ function ProjectCard({
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   })
 
+  const { mutate: remove } = useMutation({
+    mutationFn: () => deleteProject(project.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+    },
+  })
+
   const openCount = tasks.filter((t) => t.status !== 'done').length
 
   return (
@@ -302,7 +325,7 @@ function ProjectCard({
         <span className={`text-xs w-16 text-right shrink-0 ${STATUS_COLORS[project.status]}`}>
           [{project.status}]
         </span>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-20 justify-end shrink-0">
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-28 justify-end shrink-0">
           {project.status === 'active' && (
             <>
               <button
@@ -327,6 +350,12 @@ function ProjectCard({
               resume
             </button>
           )}
+          <button
+            className="text-zinc-700 hover:text-red-500 transition-colors"
+            onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${project.title}" and all its tasks?`)) remove() }}
+          >
+            del
+          </button>
         </div>
       </div>
 

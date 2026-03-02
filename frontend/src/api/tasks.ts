@@ -27,6 +27,9 @@ export const updateTask = (
   }>,
 ) => apiFetch<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) })
 
+export const deleteTask = (id: string) =>
+  apiFetch<void>(`/tasks/${id}`, { method: 'DELETE' })
+
 export const completeTask = (
   id: string,
   body: {

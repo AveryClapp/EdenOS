@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listGoals, createGoal, updateGoal } from '../api/goals'
+import { listGoals, createGoal, updateGoal, deleteGoal } from '../api/goals'
 import type { Goal } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -34,6 +34,11 @@ function GoalRow({
       qc.invalidateQueries({ queryKey: ['goals'] })
       setEditing(false)
     },
+  })
+
+  const { mutate: remove, error: deleteError } = useMutation({
+    mutationFn: () => deleteGoal(goal.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
   })
 
   const isInactive = goal.status === 'done' || goal.status === 'dropped'
@@ -77,7 +82,7 @@ function GoalRow({
           {goal.weight.toFixed(1)}
         </span>
 
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-20 justify-end shrink-0">
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-28 justify-end shrink-0">
           {goal.status === 'active' && (
             <>
               <button className="text-zinc-500 hover:text-zinc-300" onClick={() => patch({ status: 'done' })}>
@@ -93,6 +98,13 @@ function GoalRow({
               resume
             </button>
           )}
+          <button
+            className="text-zinc-700 hover:text-red-500 transition-colors"
+            onClick={() => { if (confirm(`Delete "${goal.title}"?`)) remove() }}
+            title={deleteError ? (deleteError as Error).message : 'delete goal'}
+          >
+            del
+          </button>
         </div>
       </div>
       {children}

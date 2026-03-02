@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
+from backend.models.project import Project
 from backend.models.task import Task
+from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
 from backend.api.schemas import TaskCreate, TaskUpdate, TaskComplete, TaskResponse
 
@@ -75,6 +77,12 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
     task.status = "done"
     task.actual_minutes = body.actual_minutes
 
+    # Decrement project's estimated hours remaining
+    project = db.query(Project).filter(Project.id == task.project_id).first()
+    if project:
+        hours_spent = body.actual_minutes / 60.0
+        project.estimated_hours_remaining = max(0.0, project.estimated_hours_remaining - hours_spent)
+
     record = LearningRecord(
         id=str(uuid.uuid4()),
         task_id=task.id,
@@ -104,3 +112,13 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
     db.commit()
     db.refresh(task)
     return task
+
+
+@router.delete("/{task_id}", status_code=204)
+def delete_task(task_id: str, db: Session = Depends(get_db)):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    db.query(ScheduleBlock).filter(ScheduleBlock.task_id == task_id).delete(synchronize_session=False)
+    db.delete(task)
+    db.commit()

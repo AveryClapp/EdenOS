@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.models.project import Project
+from backend.models.task import Task
+from backend.models.schedule_block import ScheduleBlock
 from backend.api.schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
@@ -51,3 +53,16 @@ def update_project(project_id: str, body: ProjectUpdate, db: Session = Depends(g
     db.commit()
     db.refresh(project)
     return project
+
+
+@router.delete("/{project_id}", status_code=204)
+def delete_project(project_id: str, db: Session = Depends(get_db)):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    task_ids = [t.id for t in db.query(Task.id).filter(Task.project_id == project_id).all()]
+    if task_ids:
+        db.query(ScheduleBlock).filter(ScheduleBlock.task_id.in_(task_ids)).delete(synchronize_session=False)
+        db.query(Task).filter(Task.project_id == project_id).delete(synchronize_session=False)
+    db.delete(project)
+    db.commit()

@@ -13,6 +13,9 @@ export const createProject = (body: {
   github_repo?: string
 }) => apiFetch<Project>('/projects', { method: 'POST', body: JSON.stringify(body) })
 
+export const deleteProject = (id: string) =>
+  apiFetch<void>(`/projects/${id}`, { method: 'DELETE' })
+
 export const updateProject = (
   id: string,
   body: Partial<{

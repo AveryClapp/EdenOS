@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import get_db
 from backend.models.goal import Goal
+from backend.models.project import Project
 from backend.api.schemas import GoalCreate, GoalUpdate, GoalResponse
 
 router = APIRouter(prefix="/api/goals", tags=["goals"])
@@ -52,3 +53,22 @@ def update_goal(goal_id: str, body: GoalUpdate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(goal)
     return goal
+
+
+@router.delete("/{goal_id}", status_code=204)
+def delete_goal(goal_id: str, db: Session = Depends(get_db)):
+    goal = db.query(Goal).filter(Goal.id == goal_id).first()
+    if not goal:
+        raise HTTPException(status_code=404, detail="Goal not found")
+    has_projects = db.query(Project).filter(
+        Project.goal_id == goal_id,
+        Project.status.notin_(["done", "dropped"]),
+    ).first()
+    if has_projects:
+        raise HTTPException(status_code=409, detail="Cannot delete goal with active projects")
+    # Also reject if has child goals
+    has_children = db.query(Goal).filter(Goal.parent_id == goal_id).first()
+    if has_children:
+        raise HTTPException(status_code=409, detail="Cannot delete goal with child goals")
+    db.delete(goal)
+    db.commit()
