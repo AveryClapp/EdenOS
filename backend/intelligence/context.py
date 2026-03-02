@@ -29,6 +29,7 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
         "energy_profile": _build_energy_profile(db, now),
         "learning_summary": _build_learning_summary(db),
         "alerts": _build_alerts(db, now),
+        "user_profile": _build_user_profile(db),
     }
 
 
@@ -122,6 +123,14 @@ def _build_learning_summary(db: Session) -> dict:
             if rs
         },
     }
+
+
+def _build_user_profile(db: Session) -> dict:
+    from backend.models.user_profile import UserProfile
+    profile = db.query(UserProfile).first()
+    if not profile:
+        return {"wake_hour": 7, "chronotype": "intermediate"}
+    return {"wake_hour": profile.wake_hour, "chronotype": profile.chronotype}
 
 
 def _build_alerts(db: Session, now: datetime) -> list[dict]:

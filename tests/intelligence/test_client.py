@@ -133,3 +133,11 @@ def test_get_alerts_does_not_call_llm(db):
 
         assert isinstance(alerts, list)
         assert not mock_client.messages.create.called
+
+
+def test_context_snapshot_includes_user_profile(db):
+    from backend.intelligence.context import build_context_snapshot
+    snapshot = build_context_snapshot(db)
+    assert "user_profile" in snapshot
+    assert "wake_hour" in snapshot["user_profile"]
+    assert "chronotype" in snapshot["user_profile"]
