@@ -36,7 +36,13 @@ class EdenClient:
             messages=[{"role": "user", "content": prompt}],
         )
 
-        raw = response.content[0].text
+        raw = response.content[0].text.strip()
+        # Strip markdown code fences if Claude wraps the JSON
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1]
+            if raw.endswith("```"):
+                raw = raw[: raw.rfind("```")]
+            raw = raw.strip()
         try:
             parsed = json.loads(raw)
             if "reasoning" not in parsed:
