@@ -16,5 +16,6 @@ class ScheduleBlock(Base):
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
     auto_generated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     overridden_by_user: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_draft: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     task: Mapped["Task | None"] = relationship("Task", back_populates="schedule_blocks")

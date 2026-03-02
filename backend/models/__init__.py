@@ -6,6 +6,7 @@ from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
 from backend.models.availability_window import AvailabilityWindow
 from backend.models.user_profile import UserProfile
+from backend.models.user_memory import UserMemory
 from backend.models.whoop_token import WhoopToken
 from backend.models.whoop_daily import WhoopDaily
 
@@ -19,6 +20,7 @@ __all__ = [
     "LearningRecord",
     "AvailabilityWindow",
     "UserProfile",
+    "UserMemory",
     "WhoopToken",
     "WhoopDaily",
 ]
