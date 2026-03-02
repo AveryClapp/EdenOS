@@ -26,6 +26,80 @@ Rules:
 """
 
 
+EDEN_TOOLS = [
+    {
+        "name": "create_task",
+        "description": "Create a new task inside an existing project.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "ID of the project to add the task to"},
+                "title": {"type": "string"},
+                "cognitive_load": {"type": "integer", "enum": [1, 2, 3], "description": "1=easy, 2=moderate, 3=deep work"},
+                "estimated_minutes": {"type": "integer"},
+                "description": {"type": "string"},
+                "deadline": {"type": "string", "description": "ISO date YYYY-MM-DD, optional"},
+            },
+            "required": ["project_id", "title", "cognitive_load", "estimated_minutes"],
+        },
+    },
+    {
+        "name": "update_task",
+        "description": "Update a task's status, estimated time, or description.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string"},
+                "status": {"type": "string", "enum": ["backlog", "active", "in_progress", "done", "deferred"]},
+                "estimated_minutes": {"type": "integer"},
+                "description": {"type": "string"},
+            },
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "delete_task",
+        "description": "Permanently delete a task.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"task_id": {"type": "string"}},
+            "required": ["task_id"],
+        },
+    },
+    {
+        "name": "create_project",
+        "description": "Create a new project under a goal.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "goal_id": {"type": "string", "description": "ID of the goal this project belongs to"},
+                "category": {"type": "string", "enum": ["research", "engineering", "academic", "athletic", "career", "personal"]},
+                "estimated_hours_remaining": {"type": "number"},
+            },
+            "required": ["title", "goal_id", "category"],
+        },
+    },
+    {
+        "name": "update_project",
+        "description": "Update a project's status.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string"},
+                "status": {"type": "string", "enum": ["active", "paused", "done"]},
+            },
+            "required": ["project_id", "status"],
+        },
+    },
+    {
+        "name": "run_scheduler",
+        "description": "Re-run the scheduler to recompute the week's schedule.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+]
+
+
 PLAN_DAY_SYSTEM_PROMPT = """You are Eden's scheduling engine.
 
 You receive the user's stated intent for today and their full context. Your job is to produce a structured action plan that creates or surfaces the right work.
