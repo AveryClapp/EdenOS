@@ -74,3 +74,21 @@ export interface ScheduleRunResult {
   blocks_cleared: number
   blocks_created: number
 }
+
+export interface EnergyProfileEntry {
+  id: string
+  hour_of_day: number
+  day_of_week: number
+  energy_level: number
+  is_post_hard_workout: boolean
+  notes: string | null
+}
+
+export interface AvailabilityWindow {
+  id: string
+  day_of_week: number | null
+  start_time: string   // "HH:MM:SS" from FastAPI
+  end_time: string
+  is_available: boolean
+  note: string | null
+}

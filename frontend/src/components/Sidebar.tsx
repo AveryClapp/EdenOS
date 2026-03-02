@@ -6,6 +6,7 @@ const NAV = [
   { label: 'G', title: 'GOALS', path: '/goals' },
   { label: 'P', title: 'PROJECTS', path: '/projects' },
   { label: '›', title: 'CHAT', path: '/chat' },
+  { label: '⚙', title: 'SETTINGS', path: '/settings' },
 ]
 
 export default function Sidebar() {
