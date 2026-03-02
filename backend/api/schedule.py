@@ -45,6 +45,7 @@ def get_schedule(
     blocks = db.query(ScheduleBlock).filter(
         ScheduleBlock.date >= start_date,
         ScheduleBlock.date < end_date,
+        ScheduleBlock.is_draft == False,
     ).all()
 
     return {

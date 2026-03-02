@@ -155,3 +155,80 @@ def format_chat_prompt(user_message: str, context_snapshot: dict) -> str:
     """
     context_str = json.dumps(context_snapshot, indent=2, default=str)
     return f"<context>\n{context_str}\n</context>\n\n{user_message}"
+
+
+PLAN_GENERATION_PROMPT = """You are Eden's scheduling engine. Given the user's tasks, energy profile, behavioral patterns, and personal memory, propose a schedule for the target date.
+
+Return ONLY a JSON object with this exact structure:
+{
+  "blocks": [
+    {
+      "task_id": "<uuid of task>",
+      "start_time": "HH:MM",
+      "end_time": "HH:MM",
+      "reason": "<one sentence why this task goes here>"
+    }
+  ],
+  "summary": "<2-3 sentence overview of the day and key decisions>"
+}
+
+Rules:
+- Only schedule tasks from the provided task list (use exact task_id values)
+- Do not overlap blocks
+- Match cognitive load to energy: load=3 in high-energy slots, load=1 in low-energy slots
+- Leave reasonable buffer time between blocks
+- Return an empty blocks array if no tasks can be reasonably scheduled
+- Return ONLY the JSON object, no other text."""
+
+
+PLANNING_TOOLS = [
+    {
+        "name": "move_block",
+        "description": "Move a draft schedule block to a new time",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "block_id": {"type": "string"},
+                "new_start_time": {"type": "string", "description": "HH:MM"},
+                "new_end_time": {"type": "string", "description": "HH:MM"},
+            },
+            "required": ["block_id", "new_start_time", "new_end_time"],
+        },
+    },
+    {
+        "name": "add_block",
+        "description": "Add a new draft block for a task",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_id": {"type": "string"},
+                "start_time": {"type": "string", "description": "HH:MM"},
+                "end_time": {"type": "string", "description": "HH:MM"},
+            },
+            "required": ["task_id", "start_time", "end_time"],
+        },
+    },
+    {
+        "name": "remove_block",
+        "description": "Remove a draft block from the schedule",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "block_id": {"type": "string"},
+            },
+            "required": ["block_id"],
+        },
+    },
+    {
+        "name": "replace_task",
+        "description": "Swap the task in a draft block for a different task",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "block_id": {"type": "string"},
+                "new_task_id": {"type": "string"},
+            },
+            "required": ["block_id", "new_task_id"],
+        },
+    },
+]
