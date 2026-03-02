@@ -76,6 +76,38 @@ def test_complete_task_sets_done_and_creates_learning_record(client):
     assert data["actual_minutes"] == 75
 
 
+def test_complete_recurring_task_creates_new_copy(client):
+    project = _setup(client)
+    task = client.post("/api/tasks", json={
+        "project_id": project["id"], "title": "Daily standup",
+        "cognitive_load": 1, "estimated_minutes": 15,
+        "recurrence_rule": "daily",
+    }).json()
+    client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 15, "completion_quality": 4, "energy_level_at_start": 3,
+    })
+    r = client.get(f"/api/tasks?project_id={project['id']}")
+    tasks = r.json()
+    assert len(tasks) == 2
+    copies = [t for t in tasks if t["id"] != task["id"]]
+    assert copies[0]["title"] == "Daily standup"
+    assert copies[0]["status"] == "backlog"
+    assert copies[0]["recurrence_rule"] == "daily"
+
+
+def test_complete_non_recurring_task_no_copy(client):
+    project = _setup(client)
+    task = client.post("/api/tasks", json={
+        "project_id": project["id"], "title": "One-off",
+        "cognitive_load": 1, "estimated_minutes": 30,
+    }).json()
+    client.post(f"/api/tasks/{task['id']}/complete", json={
+        "actual_minutes": 30, "completion_quality": 3, "energy_level_at_start": 3,
+    })
+    r = client.get(f"/api/tasks?project_id={project['id']}")
+    assert len(r.json()) == 1
+
+
 def test_list_tasks_filter_by_project(client):
     project = _setup(client)
     client.post("/api/tasks", json={

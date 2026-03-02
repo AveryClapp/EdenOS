@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import inspect as sa_inspect
+from alembic.config import Config as AlembicConfig
+from alembic import command as alembic_command
 
 from backend.db import get_db, engine, SessionLocal
 import backend.models  # noqa: F401 — ensure all models registered
@@ -34,6 +36,8 @@ async def _scheduler_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    alembic_cfg = AlembicConfig("alembic.ini")
+    alembic_command.upgrade(alembic_cfg, "head")
     task = asyncio.create_task(_scheduler_loop())
     yield
     task.cancel()

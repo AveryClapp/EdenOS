@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date, time, timedelta
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
@@ -29,13 +29,17 @@ def _serialize_block(b):
 
 
 @router.get("")
-def get_schedule(db: Session = Depends(get_db)):
+def get_schedule(
+    start: date | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    start_date = start or date.today()
+    end_date = start_date + timedelta(days=7)
     today = date.today()
-    week_end = today + timedelta(days=7)
 
     blocks = db.query(ScheduleBlock).filter(
-        ScheduleBlock.date >= today,
-        ScheduleBlock.date < week_end,
+        ScheduleBlock.date >= start_date,
+        ScheduleBlock.date < end_date,
     ).all()
 
     return {

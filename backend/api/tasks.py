@@ -85,6 +85,22 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
         recorded_at=datetime.utcnow(),
     )
     db.add(record)
+
+    if task.recurrence_rule:
+        recurrence_copy = Task(
+            id=str(uuid.uuid4()),
+            project_id=task.project_id,
+            title=task.title,
+            description=task.description,
+            cognitive_load=task.cognitive_load,
+            estimated_minutes=task.estimated_minutes,
+            recurrence_rule=task.recurrence_rule,
+            source=task.source,
+            status="backlog",
+            created_at=datetime.utcnow(),
+        )
+        db.add(recurrence_copy)
+
     db.commit()
     db.refresh(task)
     return task

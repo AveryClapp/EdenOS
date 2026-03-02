@@ -116,6 +116,7 @@ class TaskResponse(BaseModel):
     estimated_minutes: int
     actual_minutes: int | None
     deadline: datetime | None
+    recurrence_rule: str | None
     source: str
     created_at: datetime
 
