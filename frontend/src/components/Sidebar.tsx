@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 const NAV = [
   { label: 'T', title: 'TODAY', path: '/' },
   { label: '✦', title: 'PLAN', path: '/plan' },
+  { label: '▦', title: 'WEEK PLAN', path: '/plan/week' },
   { label: 'W', title: 'WEEK', path: '/week' },
   { label: 'G', title: 'GOALS', path: '/goals' },
   { label: 'P', title: 'PROJECTS', path: '/projects' },

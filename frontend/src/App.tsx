@@ -7,6 +7,7 @@ import Projects from './views/Projects'
 import Chat from './views/Chat'
 import Settings from './views/Settings'
 import PlanningSession from './views/PlanningSession'
+import WeekPlanningSession from './views/WeekPlanningSession'
 import QuickAdd from './components/QuickAdd'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/plan" element={<PlanningSession />} />
+          <Route path="/plan/week" element={<WeekPlanningSession />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
