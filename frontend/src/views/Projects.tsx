@@ -16,11 +16,11 @@ const CAT_COLORS: Record<string, string> = {
   personal: 'text-zinc-400',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: 'text-emerald-400',
-  paused: 'text-yellow-500',
-  done: 'text-zinc-600',
-  dropped: 'text-zinc-700',
+const STATUS_PILL: Record<string, { background: string; color: string }> = {
+  active:  { background: '#14240f', color: '#4a8c5c' },
+  paused:  { background: '#2a2004', color: '#c49a28' },
+  done:    { background: '#1a1710', color: '#5a5040' },
+  dropped: { background: '#1a1710', color: '#3d3428' },
 }
 
 const TASK_STATUS_COLORS: Record<string, string> = {
@@ -110,7 +110,7 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
 
   return (
     <div className="border-b border-zinc-900">
-      <div className="flex items-center gap-3 px-4 py-1.5 text-xs hover:bg-zinc-900 transition-colors group">
+      <div className="flex items-center gap-3 px-4 py-1.5 text-xs hover:bg-zinc-900/60 transition-colors group">
         <button
           className={`w-20 shrink-0 text-left ${TASK_STATUS_COLORS[task.status]} hover:opacity-70 transition-opacity`}
           onClick={() => advance(STATUS_NEXT[task.status])}
@@ -212,9 +212,9 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
             <button
               onClick={() => save()}
               disabled={!editTitle}
-              className="text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors ml-auto"
+              className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors ml-auto"
             >
-              [ save ]
+              Save
             </button>
             <button onClick={() => setEditing(false)} className="text-zinc-600 hover:text-zinc-400 transition-colors">
               cancel
@@ -311,14 +311,14 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
         <button
           onClick={() => mutate()}
           disabled={isPending || !title}
-          className="text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors ml-auto"
+          className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors ml-auto"
         >
-          {isPending ? '...' : '[ add ]'}
+          {isPending ? '…' : '+ Add task'}
         </button>
-        <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
-          cancel
+        <button onClick={onDone} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+          Cancel
         </button>
-        {error && <span className="text-red-500 text-xs">[{error}]</span>}
+        {error && <span className="text-red-500 text-xs">{error}</span>}
       </div>
     </div>
   )
@@ -353,74 +353,64 @@ function ProjectCard({
   const openCount = tasks.filter((t) => t.status !== 'done').length
 
   return (
-    <div className="border-b border-zinc-800">
+    <div className="border-b" style={{ borderColor: '#1e1710' }}>
       <div
-        className="flex items-center gap-3 px-6 py-2.5 text-sm hover:bg-zinc-900 transition-colors cursor-pointer group"
+        className="flex items-center gap-3 px-6 py-3 text-sm cursor-pointer group transition-colors"
+        onMouseEnter={e => (e.currentTarget.style.background = '#120e07')}
+        onMouseLeave={e => (e.currentTarget.style.background = '')}
         onClick={() => setExpanded((v) => !v)}
       >
-        <span className="text-zinc-600 text-xs w-3 shrink-0">{expanded ? '▾' : '▸'}</span>
-        <span
-          className={`font-medium flex-1 ${project.status === 'done' ? 'text-zinc-600 line-through' : 'text-zinc-100'}`}
-        >
+        <span className="text-xs w-3 shrink-0" style={{ color: '#4a3f30' }}>{expanded ? '▾' : '▸'}</span>
+        <span className="font-medium flex-1" style={{ color: project.status === 'done' ? '#4a3f30' : '#ede8e0', textDecoration: project.status === 'done' ? 'line-through' : 'none' }}>
           {project.title}
         </span>
         <span className={`text-xs w-24 shrink-0 ${CAT_COLORS[project.category] ?? 'text-zinc-500'}`}>
           {project.category}
         </span>
-        <span className="text-zinc-600 text-xs w-16 text-right shrink-0">
+        <span className="text-xs font-mono w-16 text-right shrink-0" style={{ color: '#6b5a47' }}>
           {project.estimated_hours_remaining.toFixed(0)}h left
         </span>
-        <span className="text-zinc-600 text-xs w-14 text-right shrink-0">
-          p={project.priority_score.toFixed(2)}
+        <span className="text-xs font-mono w-14 text-right shrink-0" style={{ color: '#4a3f30' }}>
+          {project.priority_score.toFixed(2)}
         </span>
-        <span className={`text-xs w-16 text-right shrink-0 ${STATUS_COLORS[project.status]}`}>
-          [{project.status}]
+        <span className="text-xs px-2 py-0.5 rounded-full w-16 text-center shrink-0"
+          style={STATUS_PILL[project.status] ?? { background: '#1a1710', color: '#5a5040' }}>
+          {project.status}
         </span>
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-28 justify-end shrink-0">
           {project.status === 'active' && (
             <>
-              <button
-                className="text-zinc-500 hover:text-zinc-300"
-                onClick={(e) => { e.stopPropagation(); patch({ status: 'paused' }) }}
-              >
-                pause
-              </button>
-              <button
-                className="text-zinc-500 hover:text-zinc-300"
-                onClick={(e) => { e.stopPropagation(); patch({ status: 'done' }) }}
-              >
-                done
-              </button>
+              <button className="transition-colors" style={{ color: '#6b5a47' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#a89070')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#6b5a47')}
+                onClick={(e) => { e.stopPropagation(); patch({ status: 'paused' }) }}>pause</button>
+              <button className="transition-colors" style={{ color: '#6b5a47' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#a89070')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#6b5a47')}
+                onClick={(e) => { e.stopPropagation(); patch({ status: 'done' }) }}>done</button>
             </>
           )}
           {project.status === 'paused' && (
-            <button
-              className="text-yellow-600 hover:text-yellow-400"
-              onClick={(e) => { e.stopPropagation(); patch({ status: 'active' }) }}
-            >
-              resume
-            </button>
+            <button style={{ color: '#c49a28' }}
+              onClick={(e) => { e.stopPropagation(); patch({ status: 'active' }) }}>resume</button>
           )}
-          <button
-            className="text-zinc-700 hover:text-red-500 transition-colors"
-            onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${project.title}" and all its tasks?`)) remove() }}
-          >
-            del
-          </button>
+          <button className="transition-colors" style={{ color: '#4a3f30' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#4a3f30')}
+            onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${project.title}" and all its tasks?`)) remove() }}>del</button>
         </div>
       </div>
 
       {expanded && (
-        <div className="bg-zinc-950">
-          <div className="flex items-center justify-between px-4 py-1.5 border-b border-zinc-800">
-            <span className="text-zinc-600 text-xs">
-              {goalTitle} / {openCount} open task{openCount !== 1 ? 's' : ''}
+        <div style={{ background: '#0a0804' }}>
+          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#1e1710' }}>
+            <span className="text-xs" style={{ color: '#6b5a47' }}>
+              {goalTitle} · {openCount} open task{openCount !== 1 ? 's' : ''}
             </span>
-            <button
-              onClick={() => setAddingTask(true)}
-              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-            >
-              + task
+            <button onClick={() => setAddingTask(true)}
+              className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
+              style={{ background: '#92400e' }}>
+              + Add task
             </button>
           </div>
 
@@ -506,14 +496,14 @@ function AddProjectForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }
         <button
           onClick={() => mutate()}
           disabled={isPending || !title || !goalId}
-          className="text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 transition-colors"
+          className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors"
         >
-          {isPending ? '...' : '[ add ]'}
+          {isPending ? '…' : '+ Add project'}
         </button>
-        <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
-          cancel
+        <button onClick={onDone} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+          Cancel
         </button>
-        {error && <span className="text-red-500 text-xs">[{error}]</span>}
+        {error && <span className="text-red-500 text-xs">{error}</span>}
       </div>
     </div>
   )
@@ -537,17 +527,16 @@ export default function Projects() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0">
-        <span className="text-sm tracking-widest text-zinc-100">PROJECTS</span>
-        <button
-          onClick={() => setAdding(true)}
-          className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-700 hover:border-zinc-500 px-2 py-0.5 transition-colors"
-        >
-          + add project
+      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: '#1e1710' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#f0e6d3' }}>Projects</span>
+        <button onClick={() => setAdding(true)}
+          className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
+          style={{ background: '#92400e' }}>
+          + Add project
         </button>
       </div>
 
-      <div className="flex items-center gap-3 px-6 py-1.5 text-xs text-zinc-700 border-b border-zinc-800 shrink-0">
+      <div className="flex items-center gap-3 px-6 py-1.5 text-xs border-b shrink-0" style={{ color: '#4a3f30', borderColor: '#1a1410' }}>
         <span className="w-3" />
         <span className="flex-1">title</span>
         <span className="w-24">category</span>

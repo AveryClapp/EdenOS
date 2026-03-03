@@ -8,9 +8,7 @@ import LoadDots from '../components/LoadDots'
 import type { ScheduleBlock, Task, PlanDayResult } from '../types'
 
 function formatDate(d: Date): string {
-  return d
-    .toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
-    .toUpperCase()
+  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 function fmtTime(t: string): string {
@@ -54,42 +52,45 @@ function CompleteForm({
   })
 
   return (
-    <div className="pl-20 pr-6 py-2 flex items-center gap-3 text-xs text-zinc-400 bg-zinc-900 border-b border-zinc-800">
-      <span className="text-zinc-600">mins</span>
+    <div className="pl-20 pr-6 py-2.5 flex items-center gap-3 text-xs border-b" style={{ background: '#1a1208', borderColor: '#2a2118' }}>
+      <span style={{ color: '#6b5a47' }}>mins</span>
       <input
-        className="w-14 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-0.5 text-xs font-mono"
+        className="w-14 text-xs font-mono px-2 py-1 border"
+        style={{ background: '#241a0e', borderColor: '#3d3020', color: '#ede8e0', borderRadius: '6px' }}
         value={mins}
         onChange={(e) => setMins(e.target.value)}
       />
-      <span className="text-zinc-600">quality</span>
+      <span style={{ color: '#6b5a47' }}>quality</span>
       <input
-        className="w-8 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-0.5 text-xs font-mono"
+        className="w-10 text-xs font-mono px-2 py-1 border"
+        style={{ background: '#241a0e', borderColor: '#3d3020', color: '#ede8e0', borderRadius: '6px' }}
         value={quality}
         onChange={(e) => setQuality(e.target.value)}
-        type="number"
-        min={1}
-        max={5}
+        type="number" min={1} max={5}
       />
-      <span className="text-zinc-600">energy</span>
+      <span style={{ color: '#6b5a47' }}>energy</span>
       <input
-        className="w-8 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-0.5 text-xs font-mono"
+        className="w-10 text-xs font-mono px-2 py-1 border"
+        style={{ background: '#241a0e', borderColor: '#3d3020', color: '#ede8e0', borderRadius: '6px' }}
         value={energy}
         onChange={(e) => setEnergy(e.target.value)}
-        type="number"
-        min={1}
-        max={5}
+        type="number" min={1} max={5}
       />
       <button
         onClick={() => mutate()}
         disabled={isPending}
-        className="text-emerald-400 hover:text-emerald-300 disabled:text-zinc-600 transition-colors"
+        className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
+        style={{ background: isPending ? '#3d3020' : '#92400e' }}
       >
-        {isPending ? '...' : '[ done ]'}
+        {isPending ? '…' : 'Done'}
       </button>
-      <button onClick={onDone} className="text-zinc-600 hover:text-zinc-400 transition-colors">
-        cancel
+      <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#6b5a47' }}
+        onMouseEnter={e => (e.currentTarget.style.color = '#a89070')}
+        onMouseLeave={e => (e.currentTarget.style.color = '#6b5a47')}
+      >
+        Cancel
       </button>
-      {error && <span className="text-red-500 text-xs ml-2">[{error}]</span>}
+      {error && <span className="text-red-400 text-xs ml-2">{error}</span>}
     </div>
   )
 }
@@ -101,41 +102,27 @@ function BlockRow({ block, task }: { block: ScheduleBlock; task?: Task }) {
   const isExternal = !block.task_id
 
   return (
-    <div className="border-b border-zinc-900">
+    <div className="border-b" style={{ borderColor: '#1e1710' }}>
       <div
-        className={
-          'flex items-center px-6 py-2.5 gap-4 text-sm transition-colors ' +
-          (isDone || isExternal ? 'cursor-default' : 'cursor-pointer hover:bg-zinc-900')
-        }
-        onClick={() => {
-          if (task && !isDone) setCompleting((v) => !v)
-        }}
+        className={'flex items-center px-6 py-3 gap-4 text-sm transition-colors ' +
+          (isDone || isExternal ? 'cursor-default' : 'cursor-pointer')}
+        style={completing ? { background: '#1a1208' } : undefined}
+        onMouseEnter={e => { if (!isDone && !isExternal) e.currentTarget.style.background = '#120e07' }}
+        onMouseLeave={e => { if (!completing) e.currentTarget.style.background = '' }}
+        onClick={() => { if (task && !isDone) setCompleting((v) => !v) }}
       >
-        <span className="text-zinc-500 w-11 shrink-0 text-xs">{fmtTime(block.start_time)}</span>
-        <span className="text-zinc-800 mr-1">─</span>
+        <span className="w-11 shrink-0 text-xs font-mono" style={{ color: '#6b5a47' }}>{fmtTime(block.start_time)}</span>
         <span
-          className={
-            'flex-1 ' +
-            (isDone
-              ? 'line-through text-zinc-600'
-              : isExternal
-              ? 'text-zinc-600 italic'
-              : 'text-zinc-100')
-          }
+          className={'flex-1 ' + (isDone ? 'line-through' : '')}
+          style={{ color: isDone ? '#4a3f30' : isExternal ? '#5a4d3c' : '#ede8e0', fontStyle: isExternal ? 'italic' : 'normal' }}
         >
-          {task
-            ? task.title
-            : block.calendar_event_id
-            ? '[ external event ]'
-            : '[ blocked ]'}
+          {task ? task.title : block.calendar_event_id ? 'External event' : 'Blocked'}
         </span>
         {task && <LoadDots level={task.cognitive_load} />}
-        {isLocked && <span className="text-zinc-700 text-xs">[locked]</span>}
-        {isDone && <span className="text-emerald-700 text-xs">[done]</span>}
+        {isLocked && <span className="text-xs rounded-md px-1.5 py-0.5" style={{ background: '#1e1710', color: '#5a4d3c' }}>locked</span>}
+        {isDone && <span className="text-xs rounded-md px-1.5 py-0.5" style={{ background: '#14240f', color: '#4a8c5c' }}>done</span>}
         {task && !isDone && (
-          <span className="text-zinc-700 text-xs opacity-0 group-hover:opacity-100">
-            {completing ? '▾' : '▸'}
-          </span>
+          <span className="text-xs" style={{ color: '#3d3020' }}>{completing ? '▾' : '▸'}</span>
         )}
       </div>
       {completing && task && (
@@ -191,18 +178,19 @@ function NowStrip() {
 
   if (timerStart) {
     return (
-      <div className="border-b border-zinc-800">
-        <div className="px-6 py-3 flex items-center gap-4 text-xs">
+      <div className="border-b" style={{ borderColor: '#2a2118' }}>
+        <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ background: '#1a1208' }}>
           <button
             onClick={() => setShowLog(true)}
-            className="text-emerald-500 hover:text-emerald-400 shrink-0 transition-colors"
+            className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+            style={{ background: '#92400e' }}
           >
-            [ stop & log ]
+            Stop &amp; log
           </button>
-          <span className="text-zinc-200 flex-1 truncate">{data.task.title}</span>
-          <span className="text-zinc-500 font-mono shrink-0">{formatElapsed(elapsed)}</span>
-          <button onClick={handleSkip} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
-            [ abandon ]
+          <span className="flex-1 truncate" style={{ color: '#ede8e0' }}>{data.task.title}</span>
+          <span className="font-mono shrink-0" style={{ color: '#d97706' }}>{formatElapsed(elapsed)}</span>
+          <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5a47' }}>
+            Abandon
           </button>
         </div>
         {showLog && (
@@ -224,27 +212,24 @@ function NowStrip() {
   }
 
   return (
-    <div className="border-b border-zinc-800 px-6 py-3 flex items-center gap-4 text-xs">
+    <div className="px-6 py-3 flex items-center gap-4 text-xs border-b" style={{ background: '#120e07', borderColor: '#2a2118' }}>
       <button
         onClick={handleOnIt}
-        className="text-emerald-500 hover:text-emerald-400 shrink-0 transition-colors"
+        className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+        style={{ background: '#92400e' }}
       >
-        [ on it ]
+        On it
       </button>
-      <span className="text-zinc-400 flex-1 truncate">
-        <span className="text-zinc-200">{data.task.title}</span>
+      <span className="flex-1 truncate">
+        <span style={{ color: '#ede8e0' }}>{data.task.title}</span>
         {' '}—{' '}
-        <span className="text-zinc-600">{data.reason}</span>
+        <span style={{ color: '#6b5a47' }}>{data.reason}</span>
       </span>
-      <button onClick={handleSkip} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
-        [ skip ]
-      </button>
-      <button onClick={handleNotNow} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
-        [ not now ]
-      </button>
+      <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5a47' }}>Skip</button>
+      <button onClick={handleNotNow} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5a47' }}>Not now</button>
       {skips >= 3 && (
-        <span className="text-yellow-600 text-xs shrink-0">
-          day drifting — <a href="/plan" className="underline">replan?</a>
+        <span className="text-xs shrink-0" style={{ color: '#d97706' }}>
+          Day drifting — <a href="/plan" className="underline">replan?</a>
         </span>
       )}
     </div>
@@ -291,22 +276,26 @@ export default function Today() {
     <div className="flex flex-col h-full">
       <NowStrip />
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-800 shrink-0">
-        <span className="text-zinc-100 text-sm tracking-widest">{formatDate(new Date())}</span>
+      <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: '#1e1710' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 300, color: '#f0e6d3', letterSpacing: '-0.01em' }}>
+          {formatDate(new Date())}
+        </span>
         <button
           onClick={() => runSched()}
           disabled={running}
-          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors disabled:text-zinc-800"
+          className="text-xs transition-colors"
+          style={{ color: running ? '#3d3020' : '#6b5a47' }}
         >
-          {running ? 'running...' : 're-run scheduler'}
+          {running ? 'Running…' : 'Re-run scheduler'}
         </button>
       </div>
 
       {/* Intent input */}
-      <div className="px-6 py-3 border-b border-zinc-800 shrink-0">
+      <div className="px-6 py-3 border-b shrink-0" style={{ borderColor: '#1e1710' }}>
         <div className="flex items-center gap-3">
           <input
-            className="flex-1 bg-transparent text-zinc-100 text-sm font-mono outline-none placeholder:text-zinc-700"
+            className="flex-1 text-sm outline-none placeholder:opacity-40 bg-transparent"
+            style={{ color: '#ede8e0' }}
             placeholder="What do you want to work on today?"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
@@ -316,15 +305,16 @@ export default function Today() {
           <button
             onClick={() => plan()}
             disabled={planning || !intent.trim()}
-            className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-700 border border-zinc-700 disabled:border-zinc-800 px-2 py-0.5 transition-colors shrink-0"
+            className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+            style={{ background: planning || !intent.trim() ? '#2a2118' : '#92400e', color: planning || !intent.trim() ? '#4a3f30' : '#fff' }}
           >
-            {planning ? 'planning...' : '[ plan ]'}
+            {planning ? 'Planning…' : 'Plan'}
           </button>
         </div>
         {planResult && (
           <div className="mt-2 space-y-0.5">
-            <p className="text-zinc-400 text-xs">{planResult.summary}</p>
-            <p className="text-zinc-600 text-xs">
+            <p className="text-xs" style={{ color: '#a89070' }}>{planResult.summary}</p>
+            <p className="text-xs" style={{ color: '#6b5a47' }}>
               {[
                 planResult.created_projects > 0 && `${planResult.created_projects} project${planResult.created_projects !== 1 ? 's' : ''} created`,
                 planResult.created_tasks > 0 && `${planResult.created_tasks} task${planResult.created_tasks !== 1 ? 's' : ''} added`,
@@ -341,8 +331,8 @@ export default function Today() {
       {/* Timeline */}
       <div className="flex-1 overflow-y-auto">
         {todayBlocks.length === 0 ? (
-          <div className="px-6 py-8 text-zinc-600 text-xs">
-            no blocks scheduled — run the scheduler or add tasks.
+          <div className="px-6 py-8 text-xs" style={{ color: '#4a3f30' }}>
+            Nothing scheduled yet — run the scheduler or describe your day above.
           </div>
         ) : (
           todayBlocks.map((block) => (
