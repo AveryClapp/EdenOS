@@ -121,6 +121,7 @@ class TaskResponse(BaseModel):
     source: str
     created_at: datetime
     dependency_ids: list[str] = []
+    urgency: float | None = None
 
     @model_validator(mode='before')
     @classmethod
@@ -130,6 +131,14 @@ class TaskResponse(BaseModel):
         if hasattr(data, '__table__'):
             result = {col.name: getattr(data, col.name) for col in data.__table__.columns}
             result['dependency_ids'] = [d.id for d in getattr(data, 'dependencies', [])]
+            # Compute urgency from deadline + created_at
+            deadline = result.get('deadline')
+            created_at = result.get('created_at')
+            if deadline and created_at:
+                from backend.scheduler.decay import compute_urgency
+                result['urgency'] = round(compute_urgency(1.0, deadline, created_at), 3)
+            else:
+                result['urgency'] = None
             return result
         return data
 

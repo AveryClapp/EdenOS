@@ -244,3 +244,43 @@ def test_update_task_clears_dependencies(client):
     r = client.patch(f"/api/tasks/{t2['id']}", json={"dependency_ids": []})
     assert r.status_code == 200
     assert r.json()["dependency_ids"] == []
+
+
+def test_task_with_deadline_has_urgency(client):
+    goal = client.post("/api/goals", json={
+        "title": "G", "tier": "mid", "weight": 1.0, "target_date": "2027-01-01"
+    }).json()
+    proj = client.post("/api/projects", json={
+        "title": "P", "goal_id": goal["id"], "category": "engineering",
+        "estimated_hours_remaining": 5
+    }).json()
+    from datetime import datetime, timedelta
+    deadline = (datetime.utcnow() + timedelta(days=7)).isoformat()
+    task = client.post("/api/tasks", json={
+        "project_id": proj["id"],
+        "title": "Deadline task",
+        "cognitive_load": 2,
+        "estimated_minutes": 60,
+        "deadline": deadline,
+    }).json()
+    assert "urgency" in task
+    assert task["urgency"] is not None
+    assert task["urgency"] > 0.0
+
+
+def test_task_without_deadline_has_null_urgency(client):
+    goal = client.post("/api/goals", json={
+        "title": "G2", "tier": "mid", "weight": 1.0, "target_date": "2027-01-01"
+    }).json()
+    proj = client.post("/api/projects", json={
+        "title": "P2", "goal_id": goal["id"], "category": "engineering",
+        "estimated_hours_remaining": 5
+    }).json()
+    task = client.post("/api/tasks", json={
+        "project_id": proj["id"],
+        "title": "No deadline task",
+        "cognitive_load": 1,
+        "estimated_minutes": 30,
+    }).json()
+    assert "urgency" in task
+    assert task["urgency"] is None
