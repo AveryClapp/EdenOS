@@ -9,27 +9,27 @@ import LoadDots from '../components/LoadDots'
 import type { Goal, Project, Task } from '../types'
 
 const CAT_COLORS: Record<string, string> = {
-  research: 'text-violet-400',
-  engineering: 'text-blue-400',
-  academic: 'text-cyan-400',
-  athletic: 'text-emerald-400',
-  career: 'text-amber-400',
-  personal: 'text-zinc-400',
+  research: 'text-violet-600',
+  engineering: 'text-blue-600',
+  academic: 'text-cyan-700',
+  athletic: 'text-emerald-600',
+  career: 'text-amber-700',
+  personal: 'text-stone-500',
 }
 
 const STATUS_PILL: Record<string, { background: string; color: string }> = {
-  active:  { background: '#14240f', color: '#4a8c5c' },
-  paused:  { background: '#2a2004', color: '#c49a28' },
-  done:    { background: '#1a1710', color: '#5a5040' },
-  dropped: { background: '#1a1710', color: '#3d3428' },
+  active:  { background: '#142810', color: '#4a8c5c' },
+  paused:  { background: '#d8c8a0', color: '#8a6a10' },
+  done:    { background: '#ddd3be', color: '#7a6550' },
+  dropped: { background: '#ddd3be', color: '#8a7860' },
 }
 
 const TASK_STATUS_COLORS: Record<string, string> = {
-  backlog: 'text-zinc-500',
-  active: 'text-blue-400',
-  in_progress: 'text-amber-400',
-  done: 'text-emerald-600',
-  deferred: 'text-zinc-600',
+  backlog: 'text-stone-500',
+  active: 'text-blue-600',
+  in_progress: 'text-amber-700',
+  done: 'text-emerald-700',
+  deferred: 'text-stone-400',
 }
 
 // backlog → active → in_progress → deferred → backlog; done resets to backlog
@@ -51,10 +51,10 @@ const STATUS_NEXT_LABEL: Record<string, string> = {
 
 function UrgencyBadge({ urgency }: { urgency?: number | null }) {
   if (urgency == null) return null
-  let color = 'text-zinc-700'
+  let color = 'text-stone-400'
   if (urgency > 6) color = 'text-red-500'
-  else if (urgency > 3) color = 'text-orange-400'
-  else if (urgency > 1.5) color = 'text-yellow-500'
+  else if (urgency > 3) color = 'text-orange-600'
+  else if (urgency > 1.5) color = 'text-yellow-700'
   else color = 'text-emerald-700'
   return (
     <span className={`text-xs font-mono shrink-0 ${color}`} title={`urgency: ${urgency.toFixed(2)}`}>
@@ -110,37 +110,46 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
   }
 
   return (
-    <div className="border-b border-zinc-900">
-      <div className="flex items-center gap-3 px-4 py-1.5 text-xs hover:bg-zinc-900/60 transition-colors group">
+    <div style={{ borderBottom: '1px solid #c8b89a' }}>
+      <div
+        className="flex items-center gap-3 px-4 py-1.5 text-xs transition-colors group"
+        style={{ background: 'transparent' }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#c4b494')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      >
         <button
-          className={`w-20 shrink-0 text-left ${TASK_STATUS_COLORS[task.status]} hover:opacity-70 transition-opacity`}
+          className={`w-20 shrink-0 text-left hover:opacity-70 transition-opacity ${TASK_STATUS_COLORS[task.status]}`}
           onClick={() => advance(STATUS_NEXT[task.status])}
           title={STATUS_NEXT_LABEL[task.status]}
         >
           {task.status}
         </button>
         <button
-          className={`flex-1 text-left ${task.status === 'done' ? 'line-through text-zinc-600' : 'text-zinc-200'}`}
+          className="flex-1 text-left"
+          style={{ color: task.status === 'done' ? '#8a7860' : '#1a1208', textDecoration: task.status === 'done' ? 'line-through' : 'none' }}
           onClick={() => setExpanded((v) => !v)}
         >
           {task.title}
         </button>
         <LoadDots level={task.cognitive_load} />
         <UrgencyBadge urgency={task.urgency} />
-        <span className="text-zinc-600 w-14 text-right shrink-0">{task.estimated_minutes}m</span>
+        <span className="w-14 text-right shrink-0" style={{ color: '#8a7860' }}>{task.estimated_minutes}m</span>
         {task.deadline && (
-          <span className="text-amber-600 shrink-0">{task.deadline.slice(0, 10)}</span>
+          <span className="text-amber-700 shrink-0">{task.deadline.slice(0, 10)}</span>
         )}
         {task.recurrence_rule && (
-          <span className="text-zinc-700 shrink-0">↻</span>
+          <span className="shrink-0" style={{ color: '#8a7860' }}>↻</span>
         )}
         {task.dependency_ids && task.dependency_ids.length > 0 && (
-          <span className="text-zinc-700 text-xs shrink-0" title="has dependencies">
+          <span className="text-xs shrink-0" style={{ color: '#8a7860' }} title="has dependencies">
             ⇢{task.dependency_ids.length}
           </span>
         )}
         <button
-          className="text-zinc-700 hover:text-zinc-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          className="opacity-0 group-hover:opacity-100 transition-all shrink-0"
+          style={{ color: '#8a7860' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
           onClick={openEdit}
           title="edit task"
         >
@@ -148,30 +157,32 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
         </button>
       </div>
       {expanded && !editing && (
-        <div className="px-4 pb-2 pt-1 bg-zinc-900 text-xs space-y-1">
+        <div className="px-4 pb-2 pt-1 text-xs space-y-1" style={{ background: '#c4b494' }}>
           {task.description ? (
-            <p className="text-zinc-400 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            <p className="leading-relaxed whitespace-pre-wrap" style={{ color: '#5a4535' }}>{task.description}</p>
           ) : (
-            <p className="text-zinc-700 italic">no description</p>
+            <p className="italic" style={{ color: '#8a7860' }}>no description</p>
           )}
-          <div className="flex gap-4 text-zinc-600">
-            {task.deadline && <span>deadline: <span className="text-amber-600">{task.deadline.slice(0, 10)}</span></span>}
-            {task.recurrence_rule && <span>recurs: <span className="text-zinc-400">{task.recurrence_rule}</span></span>}
+          <div className="flex gap-4" style={{ color: '#7a6550' }}>
+            {task.deadline && <span>deadline: <span className="text-amber-700">{task.deadline.slice(0, 10)}</span></span>}
+            {task.recurrence_rule && <span>recurs: <span style={{ color: '#5a4535' }}>{task.recurrence_rule}</span></span>}
             <span>source: {task.source}</span>
           </div>
         </div>
       )}
       {editing && (
-        <div className="px-4 pb-2 pt-1.5 bg-zinc-900 text-xs space-y-1.5 border-t border-zinc-800">
+        <div className="px-4 pb-2 pt-1.5 text-xs space-y-1.5" style={{ background: '#c4b494', borderTop: '1px solid #b0a085' }}>
           <input
             autoFocus
-            className="w-full bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs"
+            className="w-full px-2 py-1 font-mono text-xs"
+            style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }}
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Escape') setEditing(false) }}
           />
           <textarea
-            className="w-full bg-zinc-800 border border-zinc-700 text-zinc-300 px-2 py-1 font-mono text-xs resize-none"
+            className="w-full px-2 py-1 font-mono text-xs resize-none"
+            style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#5a4535' }}
             rows={2}
             placeholder="description (optional)"
             value={editDesc}
@@ -179,7 +190,7 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
           />
           {projectTasks.length > 0 && (
             <div>
-              <span className="text-zinc-600">blocks on:</span>
+              <span style={{ color: '#7a6550' }}>blocks on:</span>
               <div className="flex flex-wrap gap-2 mt-1">
                 {projectTasks.map((pt) => (
                   <label key={pt.id} className="flex items-center gap-1 cursor-pointer">
@@ -193,9 +204,9 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
                             : prev.filter((id) => id !== pt.id)
                         )
                       }
-                      className="accent-emerald-500"
+                      className="accent-emerald-600"
                     />
-                    <span className={`text-xs ${pt.status === 'done' ? 'text-zinc-600 line-through' : 'text-zinc-400'}`}>
+                    <span className={`text-xs`} style={{ color: pt.status === 'done' ? '#8a7860' : '#5a4535', textDecoration: pt.status === 'done' ? 'line-through' : 'none' }}>
                       {pt.title}
                     </span>
                   </label>
@@ -204,25 +215,38 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-zinc-600">mins</span>
+            <span style={{ color: '#7a6550' }}>mins</span>
             <input
-              className="w-16 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-0.5 font-mono text-xs"
+              className="w-16 px-1 py-0.5 font-mono text-xs"
+              style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }}
               value={editMins}
               onChange={(e) => setEditMins(e.target.value)}
             />
             <button
               onClick={() => save()}
               disabled={!editTitle}
-              className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors ml-auto"
+              className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors ml-auto"
+              style={{ background: '#bfad90', color: '#1a1208' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#b0a085')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#bfad90')}
             >
               Save
             </button>
-            <button onClick={() => setEditing(false)} className="text-zinc-600 hover:text-zinc-400 transition-colors">
+            <button
+              onClick={() => setEditing(false)}
+              className="transition-colors"
+              style={{ color: '#7a6550' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#7a6550')}
+            >
               cancel
             </button>
             <button
               onClick={() => { if (confirm(`Delete "${task.title}"?`)) remove() }}
-              className="text-zinc-700 hover:text-red-500 transition-colors"
+              className="transition-colors"
+              style={{ color: '#8a7860' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
             >
               delete
             </button>
@@ -261,20 +285,25 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
     onError: (e: Error) => setError(e.message),
   })
 
+  const fieldCls = "px-2 py-1 font-mono text-xs"
+  const fieldStyle = { background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }
+
   return (
-    <div className="px-4 py-2 text-xs bg-zinc-900 border-b border-zinc-800 space-y-1.5">
+    <div className="px-4 py-2 text-xs space-y-1.5" style={{ background: '#c4b494', borderBottom: '1px solid #b0a085' }}>
       <div className="flex items-center gap-2">
         <input
           autoFocus
           placeholder="task title"
-          className="flex-1 bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs"
+          className={`flex-1 ${fieldCls}`}
+          style={fieldStyle}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Escape') onDone() }}
         />
-        <span className="text-zinc-600">load</span>
+        <span style={{ color: '#7a6550' }}>load</span>
         <select
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          className={fieldCls}
+          style={fieldStyle}
           value={load}
           onChange={(e) => { setLoad(e.target.value); setMins(LOAD_DEFAULT_MINS[e.target.value]) }}
         >
@@ -282,24 +311,27 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
           <option value="2">2</option>
           <option value="3">3</option>
         </select>
-        <span className="text-zinc-600">mins</span>
+        <span style={{ color: '#7a6550' }}>mins</span>
         <input
-          className="w-14 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          className={`w-14 ${fieldCls}`}
+          style={fieldStyle}
           value={mins}
           onChange={(e) => setMins(e.target.value)}
         />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-zinc-600">deadline</span>
+        <span style={{ color: '#7a6550' }}>deadline</span>
         <input
           type="date"
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          className={fieldCls}
+          style={fieldStyle}
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
         />
-        <span className="text-zinc-600">recurs</span>
+        <span style={{ color: '#7a6550' }}>recurs</span>
         <select
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          className={fieldCls}
+          style={fieldStyle}
           value={recurrence}
           onChange={(e) => setRecurrence(e.target.value)}
         >
@@ -312,11 +344,20 @@ function AddTaskForm({ projectId, onDone }: { projectId: string; onDone: () => v
         <button
           onClick={() => mutate()}
           disabled={isPending || !title}
-          className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors ml-auto"
+          className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors ml-auto"
+          style={{ background: isPending || !title ? '#bfad90' : '#d4c4aa', color: '#1a1208', border: '1px solid #b0a085' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#b0a085')}
+          onMouseLeave={e => (e.currentTarget.style.background = isPending || !title ? '#bfad90' : '#d4c4aa')}
         >
           {isPending ? '…' : '+ Add task'}
         </button>
-        <button onClick={onDone} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+        <button
+          onClick={onDone}
+          className="text-xs transition-colors"
+          style={{ color: '#7a6550' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#1a1208')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#7a6550')}
+        >
           Cancel
         </button>
         {error && <span className="text-red-500 text-xs">{error}</span>}
@@ -369,61 +410,61 @@ function ProjectCard({
   const openCount = tasks.filter((t) => t.status !== 'done').length
 
   return (
-    <div className="border-b" style={{ borderColor: '#1e1710' }}>
+    <div className="border-b" style={{ borderColor: '#b0a085' }}>
       <div
         className="flex items-center gap-3 px-6 py-3 text-sm cursor-pointer group transition-colors"
-        onMouseEnter={e => (e.currentTarget.style.background = '#120e07')}
+        onMouseEnter={e => (e.currentTarget.style.background = '#c4b494')}
         onMouseLeave={e => (e.currentTarget.style.background = '')}
         onClick={() => setExpanded((v) => !v)}
       >
-        <span className="text-xs w-3 shrink-0" style={{ color: '#4a3f30' }}>{expanded ? '▾' : '▸'}</span>
-        <span className="font-medium flex-1" style={{ color: project.status === 'done' ? '#4a3f30' : '#ede8e0', textDecoration: project.status === 'done' ? 'line-through' : 'none' }}>
+        <span className="text-xs w-3 shrink-0" style={{ color: '#8a7860' }}>{expanded ? '▾' : '▸'}</span>
+        <span className="font-medium flex-1" style={{ color: project.status === 'done' ? '#8a7860' : '#1a1208', textDecoration: project.status === 'done' ? 'line-through' : 'none' }}>
           {project.title}
         </span>
-        <span className={`text-xs w-24 shrink-0 ${CAT_COLORS[project.category] ?? 'text-zinc-500'}`}>
+        <span className={`text-xs w-24 shrink-0 ${CAT_COLORS[project.category] ?? 'text-stone-500'}`}>
           {project.category}
         </span>
-        <span className="text-xs font-mono w-16 text-right shrink-0" style={{ color: '#6b5a47' }}>
+        <span className="text-xs font-mono w-16 text-right shrink-0" style={{ color: '#6b5040' }}>
           {project.estimated_hours_remaining.toFixed(0)}h left
         </span>
-        <span className="text-xs font-mono w-14 text-right shrink-0" style={{ color: '#4a3f30' }}>
+        <span className="text-xs font-mono w-14 text-right shrink-0" style={{ color: '#8a7860' }}>
           {project.priority_score.toFixed(2)}
         </span>
         <span className="text-xs px-2 py-0.5 rounded-full w-16 text-center shrink-0"
-          style={STATUS_PILL[project.status] ?? { background: '#1a1710', color: '#5a5040' }}>
+          style={STATUS_PILL[project.status] ?? { background: '#ddd3be', color: '#7a6550' }}>
           {project.status}
         </span>
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-28 justify-end shrink-0">
           {project.status === 'active' && (
             <>
-              <button className="transition-colors" style={{ color: '#6b5a47' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#a89070')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6b5a47')}
+              <button className="transition-colors" style={{ color: '#6b5040' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#8a7860')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#6b5040')}
                 onClick={(e) => { e.stopPropagation(); patch({ status: 'paused' }) }}>pause</button>
-              <button className="transition-colors" style={{ color: '#6b5a47' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#a89070')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6b5a47')}
+              <button className="transition-colors" style={{ color: '#6b5040' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#8a7860')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#6b5040')}
                 onClick={(e) => { e.stopPropagation(); patch({ status: 'done' }) }}>done</button>
             </>
           )}
           {project.status === 'paused' && (
-            <button style={{ color: '#c49a28' }}
+            <button style={{ color: '#8a6a10' }}
               onClick={(e) => { e.stopPropagation(); patch({ status: 'active' }) }}>resume</button>
           )}
-          <button className="transition-colors" style={{ color: '#4a3f30' }}
+          <button className="transition-colors" style={{ color: '#8a7860' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#4a3f30')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
             onClick={(e) => { e.stopPropagation(); if (confirm(`Delete "${project.title}" and all its tasks?`)) remove() }}>del</button>
         </div>
       </div>
 
       {expanded && (
-        <div style={{ background: '#0a0804' }}>
-          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#1e1710' }}>
-            <span className="text-xs" style={{ color: '#6b5a47' }}>
+        <div style={{ background: '#c4b494' }}>
+          <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#b0a085' }}>
+            <span className="text-xs" style={{ color: '#6b5040' }}>
               {goalTitle} · {openCount} open task{openCount !== 1 ? 's' : ''}
               {syncResult && (
-                <span style={{ color: '#c49a28', marginLeft: 8 }}>
+                <span style={{ color: '#8a6a10', marginLeft: 8 }}>
                   ↓ {syncResult.imported} imported{syncResult.skipped > 0 ? `, ${syncResult.skipped} skipped` : ''}
                 </span>
               )}
@@ -436,14 +477,14 @@ function ProjectCard({
                 onClick={() => doSync()}
                 disabled={syncing}
                 className="text-xs transition-colors"
-                style={{ color: syncing ? '#3d3020' : '#6b5a47' }}
+                style={{ color: syncing ? '#a89070' : '#6b5040' }}
                 title="Import assigned GitHub issues and review-requested PRs"
               >
                 {syncing ? 'syncing…' : '↓ GitHub'}
               </button>
               <button onClick={() => setAddingTask(true)}
-                className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
-                style={{ background: '#92400e' }}>
+                className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: '#7c3400', color: '#f0e8d8' }}>
                 + Add task
               </button>
             </div>
@@ -454,7 +495,7 @@ function ProjectCard({
           )}
 
           {tasks.length === 0 && !addingTask ? (
-            <div className="px-4 py-3 text-zinc-700 text-xs">no tasks</div>
+            <div className="px-4 py-3 text-xs" style={{ color: '#8a7860' }}>no tasks</div>
           ) : (
             tasks.map((t) => (
               <TaskRow
@@ -493,49 +534,55 @@ function AddProjectForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }
     onError: (e: Error) => setError(e.message),
   })
 
+  const fieldCls = "px-2 py-1 font-mono text-xs"
+  const fieldStyle = { background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }
+
   return (
-    <div className="px-6 py-3 border-b border-zinc-800 bg-zinc-900 text-xs">
+    <div className="px-6 py-3 border-b text-xs" style={{ background: '#c4b494', borderColor: '#b0a085' }}>
       <div className="flex items-center gap-3 flex-wrap">
         <input
           autoFocus
           placeholder="project title"
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-2 py-1 font-mono text-xs flex-1 min-w-48"
+          className={`${fieldCls} flex-1 min-w-48`}
+          style={fieldStyle}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Escape') onDone() }}
         />
-        <select
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
-          value={goalId}
-          onChange={(e) => setGoalId(e.target.value)}
-        >
+        <select className={fieldCls} style={fieldStyle} value={goalId} onChange={(e) => setGoalId(e.target.value)}>
           {goals.map((g) => (
             <option key={g.id} value={g.id}>{g.title}</option>
           ))}
         </select>
-        <select
-          className="bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
+        <select className={fieldCls} style={fieldStyle} value={category} onChange={(e) => setCategory(e.target.value)}>
           {['research', 'engineering', 'academic', 'athletic', 'career', 'personal'].map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
-        <span className="text-zinc-500">hrs</span>
+        <span style={{ color: '#7a6550' }}>hrs</span>
         <input
-          className="w-14 bg-zinc-800 border border-zinc-700 text-zinc-100 px-1 py-1 font-mono text-xs"
+          className={`w-14 ${fieldCls}`}
+          style={fieldStyle}
           value={hours}
           onChange={(e) => setHours(e.target.value)}
         />
         <button
           onClick={() => mutate()}
           disabled={isPending || !title || !goalId}
-          className="text-xs font-medium bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 text-zinc-200 disabled:text-zinc-600 px-3 py-1.5 rounded-md transition-colors"
+          className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+          style={{ background: '#bfad90', color: '#1a1208', border: '1px solid #b0a085' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#b0a085')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#bfad90')}
         >
           {isPending ? '…' : '+ Add project'}
         </button>
-        <button onClick={onDone} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+        <button
+          onClick={onDone}
+          className="text-xs transition-colors"
+          style={{ color: '#7a6550' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#1a1208')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#7a6550')}
+        >
           Cancel
         </button>
         {error && <span className="text-red-500 text-xs">{error}</span>}
@@ -562,16 +609,16 @@ export default function Projects() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: '#1e1710' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#f0e6d3' }}>Projects</span>
+      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: '#b0a085' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#1a1208' }}>Projects</span>
         <button onClick={() => setAdding(true)}
-          className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
-          style={{ background: '#92400e' }}>
+          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+          style={{ background: '#7c3400', color: '#f0e8d8' }}>
           + Add project
         </button>
       </div>
 
-      <div className="flex items-center gap-3 px-6 py-1.5 text-xs border-b shrink-0" style={{ color: '#4a3f30', borderColor: '#1a1410' }}>
+      <div className="flex items-center gap-3 px-6 py-1.5 text-xs border-b shrink-0" style={{ color: '#8a7860', borderColor: '#b0a085' }}>
         <span className="w-3" />
         <span className="flex-1">title</span>
         <span className="w-24">category</span>
@@ -585,9 +632,9 @@ export default function Projects() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="px-6 py-4 text-zinc-600 text-xs">loading...</div>
+          <div className="px-6 py-4 text-xs" style={{ color: '#8a7860' }}>loading...</div>
         ) : projects.length === 0 && !adding ? (
-          <div className="px-6 py-8 text-zinc-600 text-xs">no projects — add one above.</div>
+          <div className="px-6 py-8 text-xs" style={{ color: '#8a7860' }}>no projects — add one above.</div>
         ) : (
           projects.map((p) => (
             <ProjectCard

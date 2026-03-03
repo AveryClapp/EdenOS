@@ -12,7 +12,7 @@ import QuickAdd from './components/QuickAdd'
 
 export default function App() {
   return (
-    <div className="flex h-screen overflow-hidden font-mono bg-zinc-950 text-zinc-100">
+    <div className="flex h-screen overflow-hidden font-mono" style={{ background: '#c8b89a', color: '#1a1208' }}>
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <Routes>

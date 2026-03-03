@@ -17,17 +17,17 @@ function DraftTimeline({ blocks }: { blocks: DraftBlock[] }) {
   return (
     <div className="space-y-1">
       {sorted.length === 0 && (
-        <p className="text-zinc-700 text-xs">No blocks yet. Ask Eden to propose a schedule.</p>
+        <p className="text-xs" style={{ color: '#8a7860' }}>No blocks yet. Ask Eden to propose a schedule.</p>
       )}
       {sorted.map((b) => (
-        <div key={b.id} className="flex items-start gap-3 py-2 border-b border-zinc-900">
-          <span className="text-zinc-600 text-xs w-24 shrink-0">
+        <div key={b.id} className="flex items-start gap-3 py-2 border-b" style={{ borderColor: '#c8b89a' }}>
+          <span className="text-xs w-24 shrink-0" style={{ color: '#7a6550' }}>
             {formatTime(b.start_time)} – {formatTime(b.end_time)}
           </span>
           <div className="flex-1">
-            <span className="text-zinc-300 text-xs">{b.task_id ?? 'Free time'}</span>
+            <span className="text-xs" style={{ color: '#5a4535' }}>{b.task_id ?? 'Free time'}</span>
             {b.reason && (
-              <p className="text-zinc-700 text-xs mt-0.5">{b.reason}</p>
+              <p className="text-xs mt-0.5" style={{ color: '#8a7860' }}>{b.reason}</p>
             )}
           </div>
         </div>
@@ -99,11 +99,11 @@ export default function PlanningSession() {
   return (
     <div className="flex h-full">
       {/* Left: Chat */}
-      <div className="flex flex-col w-1/2 border-r border-zinc-800">
-        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+      <div className="flex flex-col w-1/2" style={{ borderRight: '1px solid #b0a085' }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #b0a085' }}>
           <div>
-            <h1 className="text-sm text-zinc-200">plan tomorrow</h1>
-            <p className="text-xs text-zinc-600">{today}</p>
+            <h1 className="text-sm" style={{ color: '#1a1208' }}>plan tomorrow</h1>
+            <p className="text-xs" style={{ color: '#7a6550' }}>{today}</p>
           </div>
           <div className="flex gap-2">
             {!locked && blocks.length > 0 && (
@@ -111,61 +111,71 @@ export default function PlanningSession() {
                 <button
                   onClick={() => lock()}
                   disabled={locking}
-                  className="text-xs text-emerald-500 hover:text-emerald-400 border border-zinc-700 px-2 py-0.5 transition-colors"
+                  className="text-xs px-2 py-0.5 transition-colors"
+                  style={{ color: locking ? '#8a7860' : '#4a8c5c', border: '1px solid #b0a085' }}
                 >
                   {locking ? 'locking...' : '[ lock in tomorrow ]'}
                 </button>
                 <button
                   onClick={() => discard()}
-                  className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+                  className="text-xs transition-colors"
+                  style={{ color: '#8a7860' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+                  onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
                 >
                   [ discard ]
                 </button>
               </>
             )}
             {locked && (
-              <span className="text-xs text-emerald-600">● locked in</span>
+              <span className="text-xs" style={{ color: '#4a8c5c' }}>● locked in</span>
             )}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {generating && messages.length === 0 && (
-            <p className="text-zinc-600 text-xs">generating your schedule...</p>
+            <p className="text-xs" style={{ color: '#7a6550' }}>generating your schedule...</p>
           )}
           {messages.map((m, i) => (
             <div key={i} className={m.role === 'user' ? 'text-right' : ''}>
-              <div className={`inline-block text-xs px-3 py-2 max-w-[85%] text-left ${
-                m.role === 'user'
-                  ? 'bg-zinc-800 text-zinc-200'
-                  : 'text-zinc-400'
-              }`}>
+              <div
+                className={`inline-block text-xs px-3 py-2 max-w-[85%] text-left`}
+                style={m.role === 'user'
+                  ? { background: '#bfad90', color: '#1a1208' }
+                  : { color: '#5a4535' }
+                }
+              >
                 {m.role === 'eden' && (
-                  <span className="text-emerald-600 text-xs block mb-1">eden</span>
+                  <span className="text-xs block mb-1" style={{ color: '#4a8c5c' }}>eden</span>
                 )}
                 {m.content}
               </div>
             </div>
           ))}
           {sending && (
-            <p className="text-zinc-700 text-xs">eden is thinking...</p>
+            <p className="text-xs" style={{ color: '#8a7860' }}>eden is thinking...</p>
           )}
           <div ref={bottomRef} />
         </div>
 
-        <div className="px-6 py-4 border-t border-zinc-800 flex gap-2">
+        <div className="px-6 py-4 flex gap-2" style={{ borderTop: '1px solid #b0a085' }}>
           <input
-            className="flex-1 bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-3 py-2 outline-none focus:border-zinc-600 placeholder-zinc-700"
+            className="flex-1 text-xs px-3 py-2 outline-none"
+            style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }}
             placeholder="move writing to morning, drop the reading block..."
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
+            onFocus={e => (e.currentTarget.style.borderColor = '#8a7860')}
+            onBlur={e => (e.currentTarget.style.borderColor = '#b0a085')}
             disabled={locked}
           />
           <button
             onClick={handleSend}
             disabled={sending || locked || !input.trim()}
-            className="text-xs text-zinc-400 hover:text-zinc-200 disabled:text-zinc-800 border border-zinc-800 px-3 py-2 transition-colors"
+            className="text-xs px-3 py-2 transition-colors"
+            style={{ color: sending || locked || !input.trim() ? '#a89070' : '#5a4535', border: '1px solid #b0a085' }}
           >
             send
           </button>
@@ -175,12 +185,15 @@ export default function PlanningSession() {
       {/* Right: Draft Timeline */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs text-zinc-500 tracking-widest uppercase">draft schedule</h2>
+          <h2 className="text-xs tracking-widest uppercase" style={{ color: '#7a6550' }}>draft schedule</h2>
           {!locked && (
             <button
               onClick={() => generate()}
               disabled={generating}
-              className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+              className="text-xs transition-colors"
+              style={{ color: '#8a7860' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
             >
               {generating ? 'regenerating...' : '[ regenerate ]'}
             </button>

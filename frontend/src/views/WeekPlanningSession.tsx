@@ -24,16 +24,16 @@ function fmtTime(t: string): string {
 function DayColumn({ date, blocks }: { date: string; blocks: DraftBlock[] }) {
   const sorted = [...blocks].sort((a, b) => a.start_time.localeCompare(b.start_time))
   return (
-    <div className="flex-1 min-w-0 border-r border-zinc-900 last:border-r-0 px-3">
-      <p className="text-zinc-600 text-xs pb-2 mb-2 border-b border-zinc-900">{fmtDay(date)}</p>
+    <div className="flex-1 min-w-0 px-3" style={{ borderRight: '1px solid #c8b89a' }}>
+      <p className="text-xs pb-2 mb-2" style={{ color: '#7a6550', borderBottom: '1px solid #c8b89a' }}>{fmtDay(date)}</p>
       {sorted.length === 0 && (
-        <p className="text-zinc-800 text-xs">—</p>
+        <p className="text-xs" style={{ color: '#a89070' }}>—</p>
       )}
       {sorted.map(b => (
         <div key={b.id} className="mb-2">
-          <p className="text-zinc-600 text-xs">{fmtTime(b.start_time)}–{fmtTime(b.end_time)}</p>
-          <p className="text-zinc-300 text-xs">{b.task_id ?? 'free'}</p>
-          {b.reason && <p className="text-zinc-700 text-xs">{b.reason}</p>}
+          <p className="text-xs" style={{ color: '#7a6550' }}>{fmtTime(b.start_time)}–{fmtTime(b.end_time)}</p>
+          <p className="text-xs" style={{ color: '#5a4535' }}>{b.task_id ?? 'free'}</p>
+          {b.reason && <p className="text-xs" style={{ color: '#8a7860' }}>{b.reason}</p>}
         </div>
       ))}
     </div>
@@ -70,10 +70,10 @@ export default function WeekPlanningSession() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
+      <div className="px-6 py-4 flex items-center justify-between shrink-0" style={{ borderBottom: '1px solid #b0a085' }}>
         <div>
-          <h1 className="text-sm text-zinc-200">plan the week</h1>
-          <p className="text-xs text-zinc-600">week of {fmtDay(weekStart)}</p>
+          <h1 className="text-sm" style={{ color: '#1a1208' }}>plan the week</h1>
+          <p className="text-xs" style={{ color: '#7a6550' }}>week of {fmtDay(weekStart)}</p>
         </div>
         <div className="flex gap-3">
           {!locked && (
@@ -81,7 +81,10 @@ export default function WeekPlanningSession() {
               <button
                 onClick={() => generate()}
                 disabled={generating}
-                className="text-xs text-zinc-500 hover:text-zinc-300 disabled:text-zinc-800 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: generating ? '#a89070' : '#7a6550' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#1a1208')}
+                onMouseLeave={e => (e.currentTarget.style.color = generating ? '#a89070' : '#7a6550')}
               >
                 {generating ? 'generating...' : days.length > 0 ? '[ regenerate ]' : '[ generate week ]'}
               </button>
@@ -90,13 +93,17 @@ export default function WeekPlanningSession() {
                   <button
                     onClick={() => lock()}
                     disabled={locking}
-                    className="text-xs text-emerald-500 hover:text-emerald-400 border border-zinc-700 px-2 py-0.5 transition-colors"
+                    className="text-xs px-2 py-0.5 transition-colors"
+                    style={{ color: locking ? '#8a7860' : '#4a8c5c', border: '1px solid #b0a085' }}
                   >
                     {locking ? 'locking...' : '[ lock in week ]'}
                   </button>
                   <button
                     onClick={() => discard()}
-                    className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+                    className="text-xs transition-colors"
+                    style={{ color: '#8a7860' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
                   >
                     [ discard ]
                   </button>
@@ -104,19 +111,19 @@ export default function WeekPlanningSession() {
               )}
             </>
           )}
-          {locked && <span className="text-xs text-emerald-600">● week locked in</span>}
+          {locked && <span className="text-xs" style={{ color: '#4a8c5c' }}>● week locked in</span>}
         </div>
       </div>
 
       <div className="flex-1 overflow-auto px-4 py-4">
         {days.length === 0 && !generating && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-700 text-xs">click [ generate week ] to propose a schedule</p>
+            <p className="text-xs" style={{ color: '#8a7860' }}>click [ generate week ] to propose a schedule</p>
           </div>
         )}
         {generating && days.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-zinc-600 text-xs">generating 7 days...</p>
+            <p className="text-xs" style={{ color: '#7a6550' }}>generating 7 days...</p>
           </div>
         )}
         {days.length > 0 && (

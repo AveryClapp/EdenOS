@@ -13,21 +13,21 @@ const NAV = [
 
 export default function Sidebar() {
   return (
-    <aside className="w-52 shrink-0 flex flex-col" style={{ background: '#0a0804', borderRight: '1px solid #2a2118' }}>
+    <aside className="w-52 shrink-0 flex flex-col" style={{ background: '#c4b494', borderRight: '1px solid #d4c4aa' }}>
       {/* Brand */}
-      <div className="px-5 py-6" style={{ borderBottom: '1px solid #2a2118' }}>
+      <div className="px-5 py-6" style={{ borderBottom: '1px solid #d4c4aa' }}>
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
-            style={{ background: '#78350f', color: '#fbbf24', fontFamily: 'var(--font-display)', fontWeight: 400 }}
+            style={{ background: '#7c3400', color: '#c49a10', fontFamily: 'var(--font-display)', fontWeight: 400 }}
           >
             E
           </div>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 400, color: '#f0e6d3', letterSpacing: '-0.02em' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 400, color: '#1a1208', letterSpacing: '-0.02em' }}>
             Eden
           </span>
         </div>
-        <p className="mt-1.5 text-xs" style={{ color: '#6b5a47', paddingLeft: '36px' }}>your reasoning layer</p>
+        <p className="mt-1.5 text-xs" style={{ color: '#6b5040', paddingLeft: '36px' }}>your reasoning layer</p>
       </div>
 
       {/* Nav */}
@@ -41,11 +41,11 @@ export default function Sidebar() {
               'flex items-center px-3 py-2 rounded-lg text-sm transition-all duration-150 ' +
               (isActive
                 ? 'font-medium'
-                : 'hover:bg-white/5')
+                : 'hover:bg-black/5')
             }
             style={({ isActive }) => isActive
-              ? { background: '#2a1d0f', color: '#fbbf24' }
-              : { color: '#7a6855' }
+              ? { background: '#bfad90', color: '#7c3400' }
+              : { color: '#7a6550' }
             }
           >
             {label}

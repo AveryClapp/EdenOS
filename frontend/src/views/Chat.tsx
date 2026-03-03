@@ -40,7 +40,7 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
     if (result.executed > 0) parts.push(`${result.executed} applied`)
     if (result.skipped > 0) parts.push(`${result.skipped} skipped`)
     return (
-      <p className="mt-2 text-zinc-600 text-xs">[{parts.join(', ')}]</p>
+      <p className="mt-2 text-xs" style={{ color: '#8a7860' }}>[{parts.join(', ')}]</p>
     )
   }
 
@@ -51,11 +51,10 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
         return (
           <div
             key={action.tool_use_id}
-            className={
-              'flex items-center gap-3 px-3 py-2 rounded-md border text-xs transition-colors ' +
-              (approved
-                ? 'border-zinc-700 bg-zinc-900 text-zinc-200'
-                : 'border-zinc-800 bg-transparent text-zinc-600 line-through')
+            className="flex items-center gap-3 px-3 py-2 rounded-md border text-xs transition-colors"
+            style={approved
+              ? { borderColor: '#b0a085', background: '#d4c4aa', color: '#1a1208' }
+              : { borderColor: '#c8b89a', background: 'transparent', color: '#8a7860', textDecoration: 'line-through' }
             }
           >
             <span className="flex-1 font-mono">{action.description}</span>
@@ -63,12 +62,13 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
               onClick={() =>
                 setApproval((prev) => ({ ...prev, [action.tool_use_id]: !prev[action.tool_use_id] }))
               }
-              className={
-                'shrink-0 text-xs font-medium transition-colors ' +
-                (approved
-                  ? 'text-emerald-400 hover:text-zinc-400'
-                  : 'text-zinc-600 hover:text-emerald-500')
+              className="shrink-0 text-xs font-medium transition-colors"
+              style={approved
+                ? { color: '#4a8c5c' }
+                : { color: '#8a7860' }
               }
+              onMouseEnter={e => (e.currentTarget.style.color = approved ? '#7a6550' : '#4a8c5c')}
+              onMouseLeave={e => (e.currentTarget.style.color = approved ? '#4a8c5c' : '#8a7860')}
             >
               {approved ? 'Approve' : 'Skip'}
             </button>
@@ -79,7 +79,8 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
         <button
           onClick={() => mutate()}
           disabled={isPending}
-          className="text-xs font-medium bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 text-white px-3 py-1.5 rounded-md transition-colors"
+          className="text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+          style={{ background: isPending ? '#bfad90' : '#4a8c5c', color: '#f0e8d8' }}
         >
           {isPending ? 'Applying…' : 'Apply'}
         </button>
@@ -89,7 +90,10 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
             mutate()
           }}
           disabled={isPending}
-          className="text-xs text-zinc-500 hover:text-zinc-300 disabled:text-zinc-800 transition-colors"
+          className="text-xs transition-colors"
+          style={{ color: '#7a6550' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#1a1208')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#7a6550')}
         >
           Reject all
         </button>
@@ -104,12 +108,12 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
   const [showReasoning, setShowReasoning] = useState(false)
 
   return (
-    <div className="py-4 border-b border-zinc-900">
+    <div className="py-4 border-b" style={{ borderColor: '#c8b89a' }}>
       <div className="flex gap-3 items-start">
-        <span className="w-6 h-6 rounded-full bg-emerald-900 border border-emerald-700 flex items-center justify-center text-emerald-400 text-xs shrink-0 mt-0.5">E</span>
+        <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5" style={{ background: '#142810', border: '1px solid #4a8c5c', color: '#4a8c5c' }}>E</span>
         <div className="flex-1 min-w-0">
           {msg.content && (
-            <div className="text-zinc-100 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:text-zinc-100 prose-strong:text-zinc-100 prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
+            <div className="text-sm leading-relaxed prose prose-sm max-w-none prose-p:my-1 prose-headings:text-stone-800 prose-strong:text-stone-800 prose-code:text-emerald-700 prose-code:before:content-none prose-code:after:content-none prose-ul:my-1 prose-ol:my-1 prose-li:my-0" style={{ color: '#1a1208' }}>
               <ReactMarkdown>{msg.content}</ReactMarkdown>
             </div>
           )}
@@ -120,12 +124,15 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
             <div className="mt-2">
               <button
                 onClick={() => setShowReasoning((v) => !v)}
-                className="text-zinc-600 text-xs hover:text-zinc-400 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: '#8a7860' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
               >
                 reasoning {showReasoning ? '▾' : '▸'}
               </button>
               {showReasoning && (
-                <p className="mt-1.5 text-zinc-500 text-xs italic leading-relaxed whitespace-pre-wrap pl-3 border-l border-zinc-800">
+                <p className="mt-1.5 text-xs italic leading-relaxed whitespace-pre-wrap pl-3" style={{ color: '#7a6550', borderLeft: '1px solid #b0a085' }}>
                   {msg.reasoning}
                 </p>
               )}
@@ -140,7 +147,7 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
 function UserMessage({ msg }: { msg: ChatMessage }) {
   return (
     <div className="py-3 flex justify-end">
-      <p className="text-zinc-200 text-sm leading-relaxed bg-zinc-800 px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-lg">
+      <p className="text-sm leading-relaxed px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-lg" style={{ background: '#bfad90', color: '#1a1208' }}>
         {msg.content}
       </p>
     </div>
@@ -212,11 +219,14 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-zinc-800 shrink-0 flex items-center justify-between">
-        <span className="text-zinc-100 font-semibold text-sm">Chat</span>
+      <div className="px-6 py-4 shrink-0 flex items-center justify-between" style={{ borderBottom: '1px solid #b0a085' }}>
+        <span className="font-semibold text-sm" style={{ color: '#1a1208' }}>Chat</span>
         <button
           onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setMessages(INITIAL) }}
-          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          className="text-xs transition-colors"
+          style={{ color: '#8a7860' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#5a4535')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
         >
           Clear
         </button>
@@ -231,19 +241,20 @@ export default function Chat() {
           ),
         )}
         {isPending && (
-          <div className="py-4 border-b border-zinc-900">
+          <div className="py-4 border-b" style={{ borderColor: '#c8b89a' }}>
             <div className="flex gap-3 items-start">
-              <span className="w-6 h-6 rounded-full bg-emerald-900 border border-emerald-700 flex items-center justify-center text-emerald-400 text-xs shrink-0 mt-0.5">E</span>
-              <span className="text-zinc-600 text-xs animate-pulse">thinking…</span>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5" style={{ background: '#142810', border: '1px solid #4a8c5c', color: '#4a8c5c' }}>E</span>
+              <span className="text-xs animate-pulse" style={{ color: '#8a7860' }}>thinking…</span>
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-zinc-800 px-6 py-4 shrink-0 flex items-center gap-3">
+      <div className="px-6 py-4 shrink-0 flex items-center gap-3" style={{ borderTop: '1px solid #b0a085' }}>
         <input
-          className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 text-zinc-100 text-sm px-4 py-2.5 rounded-lg outline-none placeholder:text-zinc-600 transition-colors"
+          className="flex-1 text-sm px-4 py-2.5 rounded-lg outline-none transition-colors"
+          style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#1a1208' }}
           placeholder="Ask Eden anything…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -253,6 +264,8 @@ export default function Chat() {
               submit()
             }
           }}
+          onFocus={e => (e.currentTarget.style.borderColor = '#8a7860')}
+          onBlur={e => (e.currentTarget.style.borderColor = '#b0a085')}
           disabled={isPending}
           autoFocus
         />

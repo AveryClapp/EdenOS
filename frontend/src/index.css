@@ -16,8 +16,8 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #0e0b08;
-  color: #ede8e0;
+  background-color: #c8b89a;
+  color: #1a1208;
   font-family: var(--font-sans);
 }
 
@@ -47,6 +47,6 @@ textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3d3328;
+  background: #a89070;
   border-radius: 2px;
 }

@@ -46,17 +46,19 @@ export default function QuickAdd() {
     <>
       <button
         onClick={() => { setOpen(v => !v); setFeedback(null) }}
-        className="fixed bottom-6 right-6 w-8 h-8 bg-zinc-950 border border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 text-base transition-colors flex items-center justify-center z-50"
+        className="fixed bottom-6 right-6 w-8 h-8 text-base transition-colors flex items-center justify-center z-50"
+        style={{ background: '#d4c4aa', border: '1px solid #b0a085', color: '#7a6550' }}
         title="Quick add task (natural language)"
       >
         +
       </button>
       {open && (
-        <div className="fixed bottom-16 right-6 w-80 bg-zinc-950 border border-zinc-800 p-3 z-50 shadow-2xl">
-          <p className="text-zinc-600 text-xs mb-2">quick add — describe the task naturally</p>
+        <div className="fixed bottom-16 right-6 w-80 p-3 z-50 shadow-2xl" style={{ background: '#d4c4aa', border: '1px solid #b0a085' }}>
+          <p className="text-xs mb-2" style={{ color: '#7a6550' }}>quick add — describe the task naturally</p>
           <input
             autoFocus
-            className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-2 py-1.5 outline-none focus:border-zinc-600 placeholder-zinc-700"
+            className="w-full text-xs px-2 py-1.5 outline-none"
+            style={{ background: '#c8b89a', border: '1px solid #b0a085', color: '#1a1208' }}
             placeholder="finish ML paper section 3 by Friday, deep work, ~90min..."
             value={text}
             onChange={e => setText(e.target.value)}
@@ -67,7 +69,7 @@ export default function QuickAdd() {
             disabled={isPending}
           />
           {feedback ? (
-            <p className={`text-xs mt-1.5 ${feedback.includes('✓') ? 'text-emerald-600' : 'text-zinc-500'}`}>
+            <p className={`text-xs mt-1.5 ${feedback.includes('✓') ? 'text-emerald-700' : ''}`} style={!feedback.includes('✓') ? { color: '#7a6550' } : undefined}>
               {feedback}
             </p>
           ) : (
@@ -75,13 +77,15 @@ export default function QuickAdd() {
               <button
                 onClick={handleSubmit}
                 disabled={isPending || !text.trim()}
-                className="text-xs text-zinc-500 hover:text-zinc-300 disabled:text-zinc-800 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: isPending || !text.trim() ? '#a89070' : '#5a4535' }}
               >
                 {isPending ? 'thinking...' : '[ add ]'}
               </button>
               <button
                 onClick={() => { setOpen(false); setText('') }}
-                className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: '#8a7860' }}
               >
                 [ cancel ]
               </button>
