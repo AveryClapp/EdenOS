@@ -16,11 +16,13 @@ from backend.scheduler.engine import SchedulerEngine
 from backend.scheduler.priority import recompute_all_priorities
 from backend.intelligence.client import EdenClient
 from backend.intelligence.explainer import generate_schedule_explanation
+from backend.intelligence.goal_inference import check_goal_coverage
 from backend.models.plan_explanation import PlanExplanation
 from backend.api.schemas import ScheduleOverride, ScheduleRunResponse, PlanDayRequest, PlanDayResponse
 
 router = APIRouter(prefix="/api/schedule", tags=["schedule"])
 _engine = SchedulerEngine()
+_goal_proposals_cache: list[dict] = []
 
 
 def _serialize_block(b):
@@ -164,12 +166,27 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         pass  # Explanation is best-effort — never fail the scheduler
 
     recompute_all_priorities(db, now=now)
+
+    # Goal coverage check — propose tasks for thin goals (best-effort)
+    try:
+        _goal_proposals_cache.clear()
+        proposals = check_goal_coverage(db)
+        _goal_proposals_cache.extend(proposals)
+    except Exception:
+        pass
+
     return ScheduleRunResponse(blocks_cleared=deleted, blocks_created=len(results))
 
 
 @router.post("/run", response_model=ScheduleRunResponse)
 def run_scheduler(db: Session = Depends(get_db)):
     return _run_scheduler_job(db)
+
+
+@router.get("/goal-proposals")
+def get_goal_proposals():
+    """Return inferred task proposals for thin goals."""
+    return {"proposals": _goal_proposals_cache}
 
 
 @router.get("/explanation")
