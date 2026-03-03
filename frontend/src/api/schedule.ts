@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { ScheduleResponse, ScheduleRunResult, PlanDayResult } from '../types'
+import type { ScheduleResponse, ScheduleRunResult, PlanDayResult, ScheduleExplanation } from '../types'
 
 export const getSchedule = (start?: string) =>
   apiFetch<ScheduleResponse>(start ? `/schedule?start=${start}` : '/schedule')
@@ -17,3 +17,6 @@ export const createOverride = (body: {
   task_id?: string
   label?: string
 }) => apiFetch<unknown>('/schedule/override', { method: 'POST', body: JSON.stringify(body) })
+
+export const getExplanation = (date?: string) =>
+  apiFetch<ScheduleExplanation>(date ? `/schedule/explanation?date=${date}` : '/schedule/explanation')

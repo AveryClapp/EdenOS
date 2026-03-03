@@ -174,3 +174,8 @@ export interface PlanProposal {
   summary: string
   date: string
 }
+
+export interface ScheduleExplanation {
+  summary: string
+  block_reasoning: Record<string, string>
+}

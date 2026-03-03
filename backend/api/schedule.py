@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime, date, time, timedelta
 from fastapi import APIRouter, Depends, Query
@@ -14,6 +15,8 @@ from backend.models.learning_record import LearningRecord
 from backend.scheduler.engine import SchedulerEngine
 from backend.scheduler.priority import recompute_all_priorities
 from backend.intelligence.client import EdenClient
+from backend.intelligence.explainer import generate_schedule_explanation
+from backend.models.plan_explanation import PlanExplanation
 from backend.api.schemas import ScheduleOverride, ScheduleRunResponse, PlanDayRequest, PlanDayResponse
 
 router = APIRouter(prefix="/api/schedule", tags=["schedule"])
@@ -131,6 +134,35 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         db.add(block)
 
     db.commit()
+
+    # Generate schedule explanation as background-style work (best-effort)
+    try:
+        today_blocks = [b for b in results if b.date == start_date]
+        task_ids = [b.task_id for b in today_blocks if b.task_id]
+        task_objs = {t.id: {"title": t.title, "cognitive_load": t.cognitive_load, "urgency": None}
+                     for t in tasks if t.id in task_ids}
+        blocks_for_explain = [
+            {"task_id": b.task_id, "start_time": str(b.start_time),
+             "end_time": str(b.end_time), "label": None}
+            for b in today_blocks
+        ]
+        explanation = generate_schedule_explanation(blocks_for_explain, task_objs)
+        existing = db.query(PlanExplanation).filter(PlanExplanation.date == start_date).first()
+        if existing:
+            existing.summary = explanation["summary"]
+            existing.full_reasoning = json.dumps(explanation["block_reasoning"])
+        else:
+            db.add(PlanExplanation(
+                id=str(uuid.uuid4()),
+                date=start_date,
+                summary=explanation["summary"],
+                full_reasoning=json.dumps(explanation["block_reasoning"]),
+                created_at=datetime.utcnow(),
+            ))
+        db.commit()
+    except Exception:
+        pass  # Explanation is best-effort — never fail the scheduler
+
     recompute_all_priorities(db, now=now)
     return ScheduleRunResponse(blocks_cleared=deleted, blocks_created=len(results))
 
@@ -138,6 +170,19 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
 @router.post("/run", response_model=ScheduleRunResponse)
 def run_scheduler(db: Session = Depends(get_db)):
     return _run_scheduler_job(db)
+
+
+@router.get("/explanation")
+def get_explanation(date: date = Query(default=None), db: Session = Depends(get_db)):
+    from datetime import date as date_type
+    target = date or date_type.today()
+    row = db.query(PlanExplanation).filter(PlanExplanation.date == target).first()
+    if not row:
+        return {"summary": "", "block_reasoning": {}}
+    return {
+        "summary": row.summary,
+        "block_reasoning": json.loads(row.full_reasoning or "{}"),
+    }
 
 
 @router.post("/plan-day", response_model=PlanDayResponse)
