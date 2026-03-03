@@ -52,7 +52,7 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
           <div
             key={action.tool_use_id}
             className={
-              'flex items-center gap-3 px-3 py-2 border text-xs transition-colors ' +
+              'flex items-center gap-3 px-3 py-2 rounded-md border text-xs transition-colors ' +
               (approved
                 ? 'border-zinc-700 bg-zinc-900 text-zinc-200'
                 : 'border-zinc-800 bg-transparent text-zinc-600 line-through')
@@ -64,13 +64,13 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
                 setApproval((prev) => ({ ...prev, [action.tool_use_id]: !prev[action.tool_use_id] }))
               }
               className={
-                'shrink-0 text-xs transition-colors ' +
+                'shrink-0 text-xs font-medium transition-colors ' +
                 (approved
-                  ? 'text-emerald-500 hover:text-zinc-400'
+                  ? 'text-emerald-400 hover:text-zinc-400'
                   : 'text-zinc-600 hover:text-emerald-500')
               }
             >
-              {approved ? '[ ✓ approve ]' : '[ skip ]'}
+              {approved ? 'Approve' : 'Skip'}
             </button>
           </div>
         )
@@ -79,9 +79,9 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
         <button
           onClick={() => mutate()}
           disabled={isPending}
-          className="text-xs text-emerald-400 hover:text-emerald-300 disabled:text-zinc-600 border border-zinc-700 disabled:border-zinc-800 px-2 py-0.5 transition-colors"
+          className="text-xs font-medium bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 text-white px-3 py-1.5 rounded-md transition-colors"
         >
-          {isPending ? 'applying...' : '[ apply ]'}
+          {isPending ? 'Applying…' : 'Apply'}
         </button>
         <button
           onClick={() => {
@@ -89,9 +89,9 @@ function ActionCards({ actions, messageIndex }: { actions: ProposedAction[]; mes
             mutate()
           }}
           disabled={isPending}
-          className="text-xs text-zinc-600 hover:text-zinc-400 disabled:text-zinc-800 transition-colors"
+          className="text-xs text-zinc-500 hover:text-zinc-300 disabled:text-zinc-800 transition-colors"
         >
-          reject all
+          Reject all
         </button>
       </div>
     </div>
@@ -106,7 +106,7 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
   return (
     <div className="py-4 border-b border-zinc-900">
       <div className="flex gap-3 items-start">
-        <span className="text-zinc-600 text-xs shrink-0 pt-0.5 w-12">EDEN ›</span>
+        <span className="w-6 h-6 rounded-full bg-emerald-900 border border-emerald-700 flex items-center justify-center text-emerald-400 text-xs shrink-0 mt-0.5">E</span>
         <div className="flex-1 min-w-0">
           {msg.content && (
             <div className="text-zinc-100 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:text-zinc-100 prose-strong:text-zinc-100 prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
@@ -122,7 +122,7 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
                 onClick={() => setShowReasoning((v) => !v)}
                 className="text-zinc-600 text-xs hover:text-zinc-400 transition-colors"
               >
-                [reasoning {showReasoning ? '▾' : '▸'}]
+                reasoning {showReasoning ? '▾' : '▸'}
               </button>
               {showReasoning && (
                 <p className="mt-1.5 text-zinc-500 text-xs italic leading-relaxed whitespace-pre-wrap pl-3 border-l border-zinc-800">
@@ -139,13 +139,10 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
 
 function UserMessage({ msg }: { msg: ChatMessage }) {
   return (
-    <div className="py-4 border-b border-zinc-900">
-      <div className="flex gap-3 items-start justify-end">
-        <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap bg-zinc-800 px-3 py-1.5 max-w-xl">
-          {msg.content}
-        </p>
-        <span className="text-zinc-600 text-xs shrink-0 pt-0.5 w-12 text-right">YOU ›</span>
-      </div>
+    <div className="py-3 flex justify-end">
+      <p className="text-zinc-200 text-sm leading-relaxed bg-zinc-800 px-4 py-2.5 rounded-2xl rounded-tr-sm max-w-lg">
+        {msg.content}
+      </p>
     </div>
   )
 }
@@ -215,13 +212,13 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-3 border-b border-zinc-800 text-sm tracking-widest text-zinc-100 shrink-0 flex items-center justify-between">
-        <span>CHAT</span>
+      <div className="px-6 py-4 border-b border-zinc-800 shrink-0 flex items-center justify-between">
+        <span className="text-zinc-100 font-semibold text-sm">Chat</span>
         <button
           onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setMessages(INITIAL) }}
-          className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+          className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
         >
-          [ clear ]
+          Clear
         </button>
       </div>
 
@@ -236,19 +233,18 @@ export default function Chat() {
         {isPending && (
           <div className="py-4 border-b border-zinc-900">
             <div className="flex gap-3 items-start">
-              <span className="text-zinc-600 text-xs shrink-0 pt-0.5 w-12">EDEN ›</span>
-              <span className="text-zinc-600 text-xs animate-pulse">thinking...</span>
+              <span className="w-6 h-6 rounded-full bg-emerald-900 border border-emerald-700 flex items-center justify-center text-emerald-400 text-xs shrink-0 mt-0.5">E</span>
+              <span className="text-zinc-600 text-xs animate-pulse">thinking…</span>
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-zinc-800 px-6 py-3 shrink-0 flex items-center gap-3">
-        <span className="text-zinc-600 text-xs w-12">YOU ›</span>
+      <div className="border-t border-zinc-800 px-6 py-4 shrink-0 flex items-center gap-3">
         <input
-          className="flex-1 bg-transparent text-zinc-100 text-sm font-mono outline-none placeholder:text-zinc-700"
-          placeholder="ask eden..."
+          className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 text-zinc-100 text-sm px-4 py-2.5 rounded-lg outline-none placeholder:text-zinc-600 transition-colors"
+          placeholder="Ask Eden anything…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -260,7 +256,6 @@ export default function Chat() {
           disabled={isPending}
           autoFocus
         />
-        <span className="text-zinc-700 text-xs">↵</span>
       </div>
     </div>
   )

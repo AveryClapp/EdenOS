@@ -8,7 +8,7 @@ export const sendMessage = (
   mode: 'chat' | 'planning' = 'chat',
   planningDate?: string,
 ) =>
-  apiFetch<ChatResponse>('/chat/', {
+  apiFetch<ChatResponse>('/chat', {
     method: 'POST',
     body: JSON.stringify({ message, mode, planning_date: planningDate ?? null }),
   })
