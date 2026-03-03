@@ -9,6 +9,8 @@ from backend.models.user_profile import UserProfile
 from backend.models.user_memory import UserMemory
 from backend.models.whoop_token import WhoopToken
 from backend.models.whoop_daily import WhoopDaily
+from backend.models.plan_explanation import PlanExplanation
+from backend.models.rl_episode import RLEpisode
 
 __all__ = [
     "Goal",
@@ -23,4 +25,6 @@ __all__ = [
     "UserMemory",
     "WhoopToken",
     "WhoopDaily",
+    "PlanExplanation",
+    "RLEpisode",
 ]
