@@ -7,6 +7,7 @@ import Projects from './views/Projects'
 import Chat from './views/Chat'
 import Settings from './views/Settings'
 import PlanningSession from './views/PlanningSession'
+import QuickAdd from './components/QuickAdd'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <QuickAdd />
     </div>
   )
 }
