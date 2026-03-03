@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import ReactMarkdown from 'react-markdown'
 import { sendMessage, executeActions } from '../api/chat'
 import type { ChatMessage, ProposedAction } from '../types'
 
@@ -108,7 +109,9 @@ function EdenMessage({ msg, index }: { msg: ChatMessage; index: number }) {
         <span className="text-zinc-600 text-xs shrink-0 pt-0.5 w-12">EDEN ›</span>
         <div className="flex-1 min-w-0">
           {msg.content && (
-            <p className="text-zinc-100 text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+            <div className="text-zinc-100 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:text-zinc-100 prose-strong:text-zinc-100 prose-code:text-emerald-400 prose-code:before:content-none prose-code:after:content-none prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
+              <ReactMarkdown>{msg.content}</ReactMarkdown>
+            </div>
           )}
           {msg.proposed_actions && msg.proposed_actions.length > 0 && (
             <ActionCards actions={msg.proposed_actions} messageIndex={index} />
@@ -156,10 +159,26 @@ const INITIAL: ChatMessage[] = [
   },
 ]
 
+const STORAGE_KEY = 'eden-chat-history'
+
+function loadMessages(): ChatMessage[] {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY)
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return INITIAL
+}
+
 export default function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL)
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages)
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    } catch {}
+  }, [messages])
 
   const { mutate, isPending } = useMutation({
     mutationFn: (msg: string) => sendMessage(msg),
@@ -196,8 +215,14 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-3 border-b border-zinc-800 text-sm tracking-widest text-zinc-100 shrink-0">
-        CHAT
+      <div className="px-6 py-3 border-b border-zinc-800 text-sm tracking-widest text-zinc-100 shrink-0 flex items-center justify-between">
+        <span>CHAT</span>
+        <button
+          onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setMessages(INITIAL) }}
+          className="text-xs text-zinc-700 hover:text-zinc-500 transition-colors"
+        >
+          [ clear ]
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6">

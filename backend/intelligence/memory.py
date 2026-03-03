@@ -38,16 +38,19 @@ def extract_memories_from_conversation(
         user_message=user_message,
         assistant_response=assistant_response,
     )
-    try:
-        msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=512,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = next((b.text for b in msg.content if b.type == "text"), "[]")
-        facts = json.loads(text)
-    except Exception:
-        return []
+    for attempt in range(2):
+        try:
+            msg = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=512,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = next((b.text for b in msg.content if b.type == "text"), "[]")
+            facts = json.loads(text)
+            break
+        except Exception:
+            if attempt == 1:
+                return []
 
     created = []
     for fact in facts:
