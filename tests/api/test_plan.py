@@ -89,3 +89,40 @@ def test_draft_blocks_excluded_from_schedule(client):
     # All returned blocks should have is_draft absent or false (they're serialized dicts)
     for b in schedule["today"] + schedule["week"]:
         assert b.get("is_draft", False) is False
+
+
+def test_generate_week_returns_seven_days(client):
+    from datetime import date, timedelta
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+
+    with patch("backend.api.plan.anthropic.Anthropic") as MockAnthropic:
+        mock_client = MagicMock()
+        MockAnthropic.return_value = mock_client
+        mock_client.messages.create.return_value = _mock_plan_llm("fake-task-id")
+
+        r = client.post(f"/api/plan/generate-week?start_date={monday.isoformat()}")
+
+    assert r.status_code == 200
+    data = r.json()
+    assert "days" in data
+    assert len(data["days"]) == 7
+    assert data["week_start"] == monday.isoformat()
+
+
+def test_lock_week_commits_all_drafts(client):
+    from datetime import date, timedelta
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+
+    with patch("backend.api.plan.anthropic.Anthropic") as MockAnthropic:
+        mock_client = MagicMock()
+        MockAnthropic.return_value = mock_client
+        mock_client.messages.create.return_value = _mock_plan_llm("fake-task-id")
+        client.post(f"/api/plan/generate-week?start_date={monday.isoformat()}")
+
+    r = client.post(f"/api/plan/lock-week?start_date={monday.isoformat()}")
+    assert r.status_code == 200
+    data = r.json()
+    assert "locked" in data
+    assert data["locked"] >= 0

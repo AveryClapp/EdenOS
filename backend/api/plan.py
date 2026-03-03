@@ -1,6 +1,6 @@
 import uuid
 import json
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 import anthropic
 from fastapi import APIRouter, Depends, Query
@@ -20,12 +20,8 @@ def _parse_time(t: str) -> time:
     return time(int(h), int(m))
 
 
-@router.post("/generate")
-def generate_plan(target_date: date = Query(default=None), db: Session = Depends(get_db)):
-    if target_date is None:
-        from datetime import date as _date
-        target_date = _date.today()
-
+def _generate_for_date(target_date: date, db: Session) -> dict:
+    """Core logic: generate draft blocks for one date. Returns {blocks, summary}."""
     # Delete existing drafts for this date
     db.query(ScheduleBlock).filter(
         ScheduleBlock.date == target_date,
@@ -51,7 +47,7 @@ def generate_plan(target_date: date = Query(default=None), db: Session = Depends
 </context>
 
 Target date: {target_date}
-Tasks to consider: {json.dumps(task_list)}
+Tasks to consider scheduling: {json.dumps(task_list)}
 
 Propose a schedule for {target_date}."""
 
@@ -95,11 +91,31 @@ Propose a schedule for {target_date}."""
             continue
 
     db.commit()
+    return {"blocks": created_blocks, "summary": proposal.get("summary", "")}
+
+
+@router.post("/generate")
+def generate_plan(target_date: date = Query(default=None), db: Session = Depends(get_db)):
+    if target_date is None:
+        from datetime import date as _date
+        target_date = _date.today()
+
+    result = _generate_for_date(target_date, db)
     return {
-        "blocks": created_blocks,
-        "summary": proposal.get("summary", ""),
+        "blocks": result["blocks"],
+        "summary": result["summary"],
         "date": str(target_date),
     }
+
+
+@router.post("/generate-week")
+def generate_week(start_date: date = Query(...), db: Session = Depends(get_db)):
+    results = []
+    for i in range(7):
+        day = start_date + timedelta(days=i)
+        day_result = _generate_for_date(day, db)
+        results.append({"date": str(day), **day_result})
+    return {"days": results, "week_start": str(start_date)}
 
 
 @router.post("/lock")
@@ -112,6 +128,20 @@ def lock_plan(target_date: date = Query(...), db: Session = Depends(get_db)):
         block.is_draft = False
     db.commit()
     return {"locked": len(drafts), "date": str(target_date)}
+
+
+@router.post("/lock-week")
+def lock_week(start_date: date = Query(...), db: Session = Depends(get_db)):
+    end_date = start_date + timedelta(days=7)
+    drafts = db.query(ScheduleBlock).filter(
+        ScheduleBlock.date >= start_date,
+        ScheduleBlock.date < end_date,
+        ScheduleBlock.is_draft == True,
+    ).all()
+    for block in drafts:
+        block.is_draft = False
+    db.commit()
+    return {"locked": len(drafts), "week_start": str(start_date)}
 
 
 @router.delete("/{target_date}")
