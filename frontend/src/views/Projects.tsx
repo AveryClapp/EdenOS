@@ -4,6 +4,7 @@ import { listGoals } from '../api/goals'
 import { listProjects, createProject, updateProject } from '../api/projects'
 import { listTasks, createTask, updateTask, deleteTask } from '../api/tasks'
 import { deleteProject } from '../api/projects'
+import { syncGitHub } from '../api/github'
 import LoadDots from '../components/LoadDots'
 import type { Goal, Project, Task } from '../types'
 
@@ -336,6 +337,21 @@ function ProjectCard({
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
   const [addingTask, setAddingTask] = useState(false)
+  const [syncResult, setSyncResult] = useState<{ imported: number; skipped: number } | null>(null)
+  const [syncError, setSyncError] = useState<string | null>(null)
+
+  const { mutate: doSync, isPending: syncing } = useMutation({
+    mutationFn: () => syncGitHub(project.id),
+    onSuccess: (data) => {
+      setSyncResult(data)
+      setSyncError(null)
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+    },
+    onError: (e: Error) => {
+      setSyncError(e.message)
+      setSyncResult(null)
+    },
+  })
 
   const { mutate: patch } = useMutation({
     mutationFn: (body: Parameters<typeof updateProject>[1]) => updateProject(project.id, body),
@@ -406,12 +422,31 @@ function ProjectCard({
           <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: '#1e1710' }}>
             <span className="text-xs" style={{ color: '#6b5a47' }}>
               {goalTitle} · {openCount} open task{openCount !== 1 ? 's' : ''}
+              {syncResult && (
+                <span style={{ color: '#c49a28', marginLeft: 8 }}>
+                  ↓ {syncResult.imported} imported{syncResult.skipped > 0 ? `, ${syncResult.skipped} skipped` : ''}
+                </span>
+              )}
+              {syncError && (
+                <span style={{ color: '#ef4444', marginLeft: 8 }}>{syncError}</span>
+              )}
             </span>
-            <button onClick={() => setAddingTask(true)}
-              className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
-              style={{ background: '#92400e' }}>
-              + Add task
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => doSync()}
+                disabled={syncing}
+                className="text-xs transition-colors"
+                style={{ color: syncing ? '#3d3020' : '#6b5a47' }}
+                title="Import assigned GitHub issues and review-requested PRs"
+              >
+                {syncing ? 'syncing…' : '↓ GitHub'}
+              </button>
+              <button onClick={() => setAddingTask(true)}
+                className="text-xs font-medium text-white px-3 py-1.5 rounded-lg transition-colors"
+                style={{ background: '#92400e' }}>
+                + Add task
+              </button>
+            </div>
           </div>
 
           {addingTask && (
