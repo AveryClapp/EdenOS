@@ -232,3 +232,41 @@ PLANNING_TOOLS = [
         },
     },
 ]
+
+
+EXPLAINER_SYSTEM_PROMPT = """You are Eden's schedule explainer.
+
+Given a day's schedule with task details, energy levels, and urgency scores,
+produce a JSON object with two fields:
+1. "summary": one paragraph narrating the key scheduling decisions for the day
+2. "block_reasoning": object mapping each task_id to a one-sentence explanation
+   of why it was placed at that time (cite energy level, urgency, or dependency)
+
+Respond ONLY with valid JSON. No markdown fences.
+Example:
+{
+  "summary": "Deep work on research (load 3) lands at 9am where energy is 5...",
+  "block_reasoning": {
+    "task-uuid-1": "Placed at 9am — energy 5, urgency 3.2, highest-priority deep work slot.",
+    "task-uuid-2": "Placed at 2pm — load 1 admin fits the post-lunch energy dip (energy 2)."
+  }
+}
+"""
+
+
+def format_explainer_prompt(schedule_blocks: list[dict], task_map: dict[str, dict]) -> str:
+    """Build the user prompt for schedule explanation."""
+    import json
+    blocks_with_context = []
+    for b in schedule_blocks:
+        task = task_map.get(b.get("task_id") or "")
+        blocks_with_context.append({
+            "task_id": b.get("task_id"),
+            "task_title": task["title"] if task else b.get("label") or "Blocked",
+            "cognitive_load": task["cognitive_load"] if task else None,
+            "urgency": task.get("urgency") if task else None,
+            "start_time": b["start_time"],
+            "end_time": b["end_time"],
+            "energy_at_slot": b.get("energy_at_slot"),
+        })
+    return json.dumps(blocks_with_context, default=str)
