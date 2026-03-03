@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSchedule, runScheduler, planDay } from '../api/schedule'
 import { listTasks, completeTask } from '../api/tasks'
@@ -17,15 +17,23 @@ function fmtTime(t: string): string {
   return t.slice(0, 5)
 }
 
+function formatElapsed(secs: number): string {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 function CompleteForm({
   task,
+  defaultMins,
   onDone,
 }: {
   task: Task
+  defaultMins?: number
   onDone: () => void
 }) {
   const qc = useQueryClient()
-  const [mins, setMins] = useState(String(task.estimated_minutes))
+  const [mins, setMins] = useState(String(defaultMins ?? task.estimated_minutes))
   const [quality, setQuality] = useState('3')
   const [energy, setEnergy] = useState('3')
   const [error, setError] = useState<string | null>(null)
@@ -147,6 +155,15 @@ function NowStrip() {
 
   const [skips, setSkips] = useState(0)
   const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null)
+  const [timerStart, setTimerStart] = useState<number | null>(null)
+  const [elapsed, setElapsed] = useState(0)
+  const [showLog, setShowLog] = useState(false)
+
+  useEffect(() => {
+    if (!timerStart) return
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - timerStart) / 1000)), 1000)
+    return () => clearInterval(id)
+  }, [timerStart])
 
   const now = Date.now()
   const isSnoozed = snoozedUntil !== null && now < snoozedUntil
@@ -154,19 +171,62 @@ function NowStrip() {
   if (isLoading || isSnoozed) return null
   if (!data?.task) return null
 
+  const handleOnIt = () => {
+    setTimerStart(Date.now())
+    setElapsed(0)
+  }
+
   const handleSkip = () => {
     setSkips(s => s + 1)
+    setTimerStart(null)
     qc.invalidateQueries({ queryKey: ['now'] })
   }
 
   const handleNotNow = () => {
+    setTimerStart(null)
     setSnoozedUntil(Date.now() + 20 * 60 * 1000)
+  }
+
+  const elapsedMins = Math.max(1, Math.ceil(elapsed / 60))
+
+  if (timerStart) {
+    return (
+      <div className="border-b border-zinc-800">
+        <div className="px-6 py-3 flex items-center gap-4 text-xs">
+          <button
+            onClick={() => setShowLog(true)}
+            className="text-emerald-500 hover:text-emerald-400 shrink-0 transition-colors"
+          >
+            [ stop & log ]
+          </button>
+          <span className="text-zinc-200 flex-1 truncate">{data.task.title}</span>
+          <span className="text-zinc-500 font-mono shrink-0">{formatElapsed(elapsed)}</span>
+          <button onClick={handleSkip} className="text-zinc-600 hover:text-zinc-400 shrink-0 transition-colors">
+            [ abandon ]
+          </button>
+        </div>
+        {showLog && (
+          <CompleteForm
+            task={data.task as Task}
+            defaultMins={elapsedMins}
+            onDone={() => {
+              setTimerStart(null)
+              setElapsed(0)
+              setShowLog(false)
+              qc.invalidateQueries({ queryKey: ['now'] })
+              qc.invalidateQueries({ queryKey: ['tasks'] })
+              qc.invalidateQueries({ queryKey: ['schedule'] })
+            }}
+          />
+        )}
+      </div>
+    )
   }
 
   return (
     <div className="border-b border-zinc-800 px-6 py-3 flex items-center gap-4 text-xs">
       <button
-        onClick={() => qc.invalidateQueries({ queryKey: ['now'] })}
+        onClick={handleOnIt}
         className="text-emerald-500 hover:text-emerald-400 shrink-0 transition-colors"
       >
         [ on it ]
