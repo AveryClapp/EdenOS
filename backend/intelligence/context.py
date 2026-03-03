@@ -188,6 +188,41 @@ def _build_alerts(db: Session, now: datetime) -> list[dict]:
                 "message": f"'{task.title}' is due in {hours_left}h.",
             })
 
+    # Thin goal alerts: goals with fewer than 3 open tasks across all active projects
+    active_goals = db.query(Goal).filter(Goal.status == "active").all()
+    active_projects = db.query(Project).filter(Project.status == "active").all()
+    projects_by_goal: dict[str, list] = {}
+    for p in active_projects:
+        projects_by_goal.setdefault(p.goal_id, []).append(p)
+
+    open_tasks = db.query(Task).filter(
+        Task.status.in_(["backlog", "active", "in_progress"])
+    ).all()
+    tasks_by_project: dict[str, list] = {}
+    for t in open_tasks:
+        tasks_by_project.setdefault(t.project_id, []).append(t)
+
+    for goal in active_goals:
+        goal_projects = projects_by_goal.get(goal.id, [])
+        count = sum(len(tasks_by_project.get(p.id, [])) for p in goal_projects)
+        if count < 3:
+            alerts.append({
+                "type": "thin_goal",
+                "severity": "medium",
+                "goal_id": str(goal.id),
+                "message": f"'{goal.title}' is running low on tasks — add more to keep it moving.",
+            })
+
+    # Deferred task alerts: surface tasks that have been deferred
+    deferred_tasks = db.query(Task).filter(Task.status == "deferred").all()
+    for task in deferred_tasks:
+        alerts.append({
+            "type": "deferred_task",
+            "severity": "medium",
+            "task_id": str(task.id),
+            "message": f"'{task.title}' has been deferred — reschedule or drop it?",
+        })
+
     return alerts
 
 

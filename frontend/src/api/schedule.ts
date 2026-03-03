@@ -20,3 +20,6 @@ export const createOverride = (body: {
 
 export const getExplanation = (date?: string) =>
   apiFetch<ScheduleExplanation>(date ? `/schedule/explanation?date=${date}` : '/schedule/explanation')
+
+export const getGoalProposals = () =>
+  apiFetch<{ proposals: Array<{ title: string; cognitive_load: number; estimated_minutes: number; project_id: string }> }>('/schedule/goal-proposals')

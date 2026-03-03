@@ -171,3 +171,21 @@ def test_alert_generated_for_task_due_within_24h(db):
     snap = build_context_snapshot(db, now=now)
     alert_tasks = [a["task_id"] for a in snap["alerts"] if a.get("task_id")]
     assert task.id in alert_tasks
+
+
+def test_thin_goal_alert_generated(db):
+    goal = _make_goal(db)
+    project = _make_project(db, goal)
+    _make_task(db, project, status="backlog")
+    snap = build_context_snapshot(db)
+    thin_goal_ids = [a["goal_id"] for a in snap["alerts"] if a.get("type") == "thin_goal"]
+    assert goal.id in thin_goal_ids
+
+
+def test_deferred_task_alert_generated(db):
+    goal = _make_goal(db)
+    project = _make_project(db, goal)
+    task = _make_task(db, project, status="deferred")
+    snap = build_context_snapshot(db)
+    deferred_alert_task_ids = [a["task_id"] for a in snap["alerts"] if a.get("type") == "deferred_task"]
+    assert task.id in deferred_alert_task_ids

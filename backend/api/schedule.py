@@ -205,6 +205,13 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
     except Exception:
         pass
 
+    # Energy profile update from learning records (best-effort)
+    try:
+        from backend.intelligence.energy_updater import update_energy_from_learning
+        update_energy_from_learning(db)
+    except Exception:
+        pass
+
     return ScheduleRunResponse(blocks_cleared=deleted, blocks_created=len(results))
 
 
