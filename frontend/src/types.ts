@@ -40,6 +40,7 @@ export interface Task {
   deadline: string | null
   recurrence_rule: string | null
   dependency_ids: string[]
+  urgency?: number | null
   source: string
   created_at: string
 }

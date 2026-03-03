@@ -48,6 +48,20 @@ const STATUS_NEXT_LABEL: Record<string, string> = {
   done: 'reopen → backlog',
 }
 
+function UrgencyBadge({ urgency }: { urgency?: number | null }) {
+  if (urgency == null) return null
+  let color = 'text-zinc-700'
+  if (urgency > 6) color = 'text-red-500'
+  else if (urgency > 3) color = 'text-orange-400'
+  else if (urgency > 1.5) color = 'text-yellow-500'
+  else color = 'text-emerald-700'
+  return (
+    <span className={`text-xs font-mono shrink-0 ${color}`} title={`urgency: ${urgency.toFixed(2)}`}>
+      ↑{urgency.toFixed(1)}
+    </span>
+  )
+}
+
 function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
   const qc = useQueryClient()
   const [expanded, setExpanded] = useState(false)
@@ -111,6 +125,7 @@ function TaskRow({ task, projectTasks }: { task: Task; projectTasks: Task[] }) {
           {task.title}
         </button>
         <LoadDots level={task.cognitive_load} />
+        <UrgencyBadge urgency={task.urgency} />
         <span className="text-zinc-600 w-14 text-right shrink-0">{task.estimated_minutes}m</span>
         {task.deadline && (
           <span className="text-amber-600 shrink-0">{task.deadline.slice(0, 10)}</span>
