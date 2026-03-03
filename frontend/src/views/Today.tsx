@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSchedule, runScheduler, planDay } from '../api/schedule'
+import { getSchedule, runScheduler, planDay, getExplanation } from '../api/schedule'
 import { listTasks, completeTask } from '../api/tasks'
 import { getNowSuggestion } from '../api/now'
 import AlertStrip from '../components/AlertStrip'
 import TimeGrid from '../components/TimeGrid'
-import type { Task, PlanDayResult } from '../types'
+import type { Task, PlanDayResult, ScheduleExplanation } from '../types'
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -200,6 +200,36 @@ function NowStrip() {
   )
 }
 
+function WhyStrip({ explanation }: { explanation: ScheduleExplanation }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderBottom: '1px solid #1e1710' }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 24px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: 10, color: '#4a3f30' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 11, color: '#6b5a47' }}>Why this schedule?</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 24px 12px', fontSize: 12, color: '#a89070', lineHeight: 1.6 }}>
+          {explanation.summary}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Today() {
   const qc = useQueryClient()
   const [intent, setIntent] = useState('')
@@ -214,6 +244,12 @@ export default function Today() {
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => listTasks(),
+  })
+
+  const { data: explanation } = useQuery({
+    queryKey: ['schedule-explanation'],
+    queryFn: getExplanation,
+    refetchInterval: 60_000,
   })
 
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]))
@@ -295,6 +331,9 @@ export default function Today() {
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">
+        {explanation?.summary && (
+          <WhyStrip explanation={explanation} />
+        )}
         <div className="py-2">
           {todayBlocks.length === 0 && (
             <p className="px-6 pt-4 pb-2 text-xs" style={{ color: '#4a3f30' }}>
