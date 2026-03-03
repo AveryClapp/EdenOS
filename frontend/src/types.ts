@@ -55,6 +55,7 @@ export interface ScheduleBlock {
   auto_generated: boolean
   overridden_by_user: boolean
   is_draft: boolean
+  label?: string | null
 }
 
 export interface ScheduleResponse {

@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, time
-from sqlalchemy import String, Date, Time, Boolean, ForeignKey
+from sqlalchemy import String, Date, Time, Boolean, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from backend.db import Base
 
@@ -17,5 +17,6 @@ class ScheduleBlock(Base):
     auto_generated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     overridden_by_user: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_draft: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    label: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     task: Mapped["Task | None"] = relationship("Task", back_populates="schedule_blocks")

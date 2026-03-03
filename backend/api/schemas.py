@@ -163,6 +163,7 @@ class ScheduleOverride(BaseModel):
     date: date
     start_time: str  # "HH:MM"
     end_time: str    # "HH:MM"
+    label: str | None = None
 
 
 class ScheduleRunResponse(BaseModel):

@@ -15,4 +15,5 @@ export const createOverride = (body: {
   start_time: string
   end_time: string
   task_id?: string
+  label?: string
 }) => apiFetch<unknown>('/schedule/override', { method: 'POST', body: JSON.stringify(body) })

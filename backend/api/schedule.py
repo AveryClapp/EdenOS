@@ -30,6 +30,8 @@ def _serialize_block(b):
         "end_time": str(b.end_time),
         "auto_generated": b.auto_generated,
         "overridden_by_user": b.overridden_by_user,
+        "is_draft": getattr(b, "is_draft", False),
+        "label": getattr(b, "label", None),
     }
 
 
@@ -240,6 +242,7 @@ def create_override(body: ScheduleOverride, db: Session = Depends(get_db)):
         end_time=time(int(end_parts[0]), int(end_parts[1])),
         auto_generated=False,
         overridden_by_user=True,
+        label=body.label,
     )
     db.add(block)
     db.commit()
