@@ -27,7 +27,7 @@ from backend.config import settings
 
 
 async def _scheduler_loop() -> None:
-    """Background task: re-run the scheduler every SCHEDULER_INTERVAL_SECONDS."""
+    """Background task: re-run the scheduler and compute RL rewards every interval."""
     while True:
         await asyncio.sleep(settings.scheduler_interval_seconds)
         db = SessionLocal()
@@ -35,6 +35,17 @@ async def _scheduler_loop() -> None:
             _run_scheduler_job(db)
         except Exception as exc:
             print(f"[scheduler] background run failed: {exc}")
+        finally:
+            db.close()
+
+        db = SessionLocal()
+        try:
+            from backend.intelligence.rl_collector import compute_rewards
+            closed = compute_rewards(db)
+            if closed:
+                print(f"[rl] closed {closed} episode(s)")
+        except Exception as exc:
+            print(f"[rl] reward computation failed: {exc}")
         finally:
             db.close()
 

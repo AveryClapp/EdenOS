@@ -17,6 +17,7 @@ from backend.scheduler.priority import recompute_all_priorities
 from backend.intelligence.client import EdenClient
 from backend.intelligence.explainer import generate_schedule_explanation
 from backend.intelligence.goal_inference import check_goal_coverage
+from backend.intelligence.rl_collector import record_episode, compute_rewards
 from backend.models.plan_explanation import PlanExplanation
 from backend.api.schemas import ScheduleOverride, ScheduleRunResponse, PlanDayRequest, PlanDayResponse
 
@@ -172,6 +173,35 @@ def _run_scheduler_job(db: Session) -> ScheduleRunResponse:
         _goal_proposals_cache.clear()
         proposals = check_goal_coverage(db)
         _goal_proposals_cache.extend(proposals)
+    except Exception:
+        pass
+
+    # RL episode recording (best-effort)
+    try:
+        from backend.scheduler.decay import compute_urgency
+        now = datetime.utcnow()
+        rl_state = {
+            "tasks": [
+                {
+                    "id": t.id,
+                    "cognitive_load": t.cognitive_load,
+                    "urgency": compute_urgency(1.0, t.deadline, t.created_at, now=now),
+                    "estimated_minutes": t.estimated_minutes,
+                }
+                for t in tasks
+            ],
+            "day_of_week": start_date.weekday(),
+        }
+        rl_action = [
+            {
+                "task_id": r.task_id,
+                "date": str(r.date),
+                "start_time": str(r.start_time),
+                "end_time": str(r.end_time),
+            }
+            for r in results
+        ]
+        record_episode(rl_action, rl_state, db)
     except Exception:
         pass
 
