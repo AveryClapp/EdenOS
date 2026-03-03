@@ -38,3 +38,10 @@ def compute_urgency(
     ratio = days_remaining / total_days
     urgency = base_priority * math.exp(K_STEEPNESS * (1.0 - ratio))
     return max(urgency, MIN_URGENCY)
+
+
+# --- Soft constraint weights (all objective weights configurable here) ---
+WEIGHT_URGENCY_ENERGY: float = 1.0        # Weight for urgency × energy fit term
+WEIGHT_FOCUS_QUALITY: float = 0.5         # Extra penalty for deep-focus in low-energy slot
+WEIGHT_CONTEXT_SWITCH: float = 0.3        # Penalty per adjacent-block project switch
+FOCUS_ENERGY_THRESHOLD: int = 3           # Energy level below which deep-focus is penalized

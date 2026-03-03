@@ -11,7 +11,7 @@ from backend.scheduler.constraints import (
     is_recovery_slot,
     get_slot_energy,
 )
-from backend.scheduler.decay import compute_urgency
+from backend.scheduler.decay import compute_urgency, WEIGHT_URGENCY_ENERGY, WEIGHT_FOCUS_QUALITY, WEIGHT_CONTEXT_SWITCH, FOCUS_ENERGY_THRESHOLD
 
 SOLVER_TIMEOUT_SECONDS: int = 30
 SCORE_SCALE: int = 1000
@@ -147,15 +147,42 @@ class SchedulerEngine:
                             if slots[s_a].absolute_index >= abs_b:
                                 model.Add(x[a_idx][s_a] + x[b_idx][s_b] <= 1)
 
-        # Soft objective: maximize urgency x energy fit
+        # Soft objective: urgency × energy fit + focus quality + context switching penalty
         obj_terms = []
+
+        # Term 1: urgency × energy (weighted by WEIGHT_URGENCY_ENERGY)
         for t, task in enumerate(schedulable):
             urgency = urgency_scores[t]
             for s, slot in enumerate(slots):
                 energy = energy_map.get(slot.absolute_index, 3)
-                weight = urgency * energy if task.cognitive_load == 3 else urgency
+                if task.cognitive_load == 3:
+                    base = urgency * energy
+                else:
+                    base = urgency
+                weight = int(base * WEIGHT_URGENCY_ENERGY * SCORE_SCALE / SCORE_SCALE)
                 if weight > 0:
                     obj_terms.append(weight * x[t][s])
+
+        # Term 2: focus quality — penalize deep-focus tasks in low-energy slots
+        focus_penalty_scale = int(WEIGHT_FOCUS_QUALITY * SCORE_SCALE)
+        for t, task in enumerate(schedulable):
+            if task.cognitive_load == 3:
+                for s, slot in enumerate(slots):
+                    energy = energy_map.get(slot.absolute_index, 3)
+                    if energy < FOCUS_ENERGY_THRESHOLD:
+                        obj_terms.append(-focus_penalty_scale * x[t][s])
+
+        # Term 3: context switching — penalize adjacent slots assigned to different projects
+        project_ids = [getattr(task, 'project_id', None) for task in schedulable]
+        switch_penalty_scale = int(WEIGHT_CONTEXT_SWITCH * SCORE_SCALE)
+        for s in range(n_slots - 1):
+            for t1 in range(n_tasks):
+                for t2 in range(n_tasks):
+                    if t1 != t2 and project_ids[t1] != project_ids[t2]:
+                        switch_var = model.NewBoolVar(f"sw_{t1}_{t2}_{s}")
+                        model.AddBoolAnd([x[t1][s], x[t2][s + 1]]).OnlyEnforceIf(switch_var)
+                        model.AddBoolOr([x[t1][s].Not(), x[t2][s + 1].Not()]).OnlyEnforceIf(switch_var.Not())
+                        obj_terms.append(-switch_penalty_scale * switch_var)
 
         if obj_terms:
             model.Maximize(sum(obj_terms))
