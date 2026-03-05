@@ -1,0 +1,261 @@
+#!/usr/bin/env python3
+"""Eden CLI — fast keyboard-driven access to the four most-used actions."""
+
+import json
+import os
+import sys
+import threading
+import time as _time_mod
+
+try:
+    import httpx
+except ImportError:
+    print("httpx not found. Activate the venv: source .venv/bin/activate", file=sys.stderr)
+    sys.exit(1)
+
+BASE = os.environ.get("EDEN_URL", "http://localhost:8000").rstrip("/")
+
+LOAD_ICONS = {1: "①", 2: "②", 3: "③"}
+LOAD_LABELS = {1: "easy", 2: "moderate", 3: "deep focus"}
+DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _get(path: str) -> dict | list:
+    try:
+        r = httpx.get(f"{BASE}{path}", timeout=10)
+    except httpx.ConnectError:
+        _unreachable()
+    _check(r)
+    return r.json()
+
+
+def _post(path: str, body: dict) -> dict:
+    try:
+        r = httpx.post(f"{BASE}{path}", json=body, timeout=30)
+    except httpx.ConnectError:
+        _unreachable()
+    _check(r)
+    return r.json()
+
+
+def _unreachable():
+    print(f"Eden server not reachable at {BASE}. Is it running?", file=sys.stderr)
+    sys.exit(1)
+
+
+def _check(r: httpx.Response):
+    if r.status_code >= 400:
+        print(f"Error {r.status_code}: {r.text}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _fmt_time(t: str) -> str:
+    """'09:00:00' → '9:00'"""
+    parts = t.split(":")
+    h, m = int(parts[0]), int(parts[1])
+    return f"{h}:{m:02d}"
+
+
+def _today_label() -> str:
+    from datetime import date
+    d = date.today()
+    return f"{DAYS[d.weekday()]} {MONTHS[d.month - 1]} {d.day}"
+
+
+# ── commands ─────────────────────────────────────────────────────────────────
+
+def cmd_today():
+    data = _get("/api/schedule")
+    blocks = data.get("today", [])
+
+    # Build task lookup
+    tasks_raw = _get("/api/tasks")
+    task_map = {t["id"]: t for t in tasks_raw}
+
+    print(f"\nEden — {_today_label()}")
+    print("─" * 44)
+
+    if not blocks:
+        print("  No blocks scheduled today.")
+        print("─" * 44)
+        print("Run: eden add \"<task>\" to create a task.\n")
+        return
+
+    # Sort by start_time
+    blocks.sort(key=lambda b: b["start_time"])
+
+    for b in blocks:
+        start = _fmt_time(b["start_time"])
+        end = _fmt_time(b["end_time"])
+        tid = b.get("task_id")
+
+        if tid and tid in task_map:
+            task = task_map[tid]
+            load = task.get("cognitive_load", 2)
+            icon = LOAD_ICONS.get(load, "·")
+            title = task["title"]
+            print(f" {start}–{end}  {icon}  {title}")
+        elif b.get("label"):
+            print(f" {start}–{end}  ──  {b['label']} [fixed]")
+        else:
+            print(f" {start}–{end}  ──  [fixed]")
+
+    print("─" * 44)
+    print(f"{len(blocks)} block{'s' if len(blocks) != 1 else ''}  ·  eden next for current task\n")
+
+
+def cmd_next():
+    data = _get("/api/now")
+    task = data.get("task")
+
+    if not task:
+        print("\nNo task scheduled — inbox zero.\n")
+        return
+
+    load = task.get("cognitive_load", 2)
+    mins = task.get("estimated_minutes", "?")
+    label = LOAD_LABELS.get(load, "moderate")
+    reason = data.get("reason", "")
+
+    print(f"\n→ {task['title']}  ({label} · {mins} min)")
+    if reason:
+        print(f"  {reason}")
+    print()
+
+
+def cmd_add(text: str):
+    # Spinner
+    stop_spinner = threading.Event()
+
+    def _spin():
+        frames = ["thinking…  ", "thinking.  ", "thinking.. ", "thinking..."]
+        i = 0
+        while not stop_spinner.is_set():
+            print(f"\r  {frames[i % len(frames)]}", end="", flush=True)
+            i += 1
+            _time_mod.sleep(0.3)
+        print("\r" + " " * 16 + "\r", end="", flush=True)
+
+    t = threading.Thread(target=_spin, daemon=True)
+    t.start()
+
+    try:
+        chat_resp = _post("/api/chat", {"message": text, "mode": "chat"})
+    finally:
+        stop_spinner.set()
+        t.join()
+
+    content = chat_resp.get("content", "")
+    proposed = chat_resp.get("proposed_actions", [])
+
+    if content:
+        print(f"\n{content}")
+
+    if proposed:
+        # Auto-approve all proposed actions
+        approved_actions = [
+            {
+                "tool_use_id": a["tool_use_id"],
+                "name": a["name"],
+                "input": a["input"],
+                "approved": True,
+            }
+            for a in proposed
+        ]
+        exec_resp = _post("/api/chat/actions/execute", {"actions": approved_actions})
+        executed = exec_resp.get("executed", 0)
+
+        # Show created task titles
+        for a in proposed:
+            if a["name"] == "create_task":
+                title = a["input"].get("title", "")
+                if title:
+                    print(f"  + {title}")
+
+        if executed:
+            print(f"\n  {executed} action{'s' if executed != 1 else ''} applied.")
+    print()
+
+
+def cmd_done(task_id: str | None):
+    if task_id is None:
+        data = _get("/api/now")
+        task = data.get("task")
+        if not task:
+            print("No current task. Pass a task_id: eden done <id>", file=sys.stderr)
+            sys.exit(1)
+        task_id = task["id"]
+        title = task["title"]
+    else:
+        task_data = _get(f"/api/tasks/{task_id}")
+        title = task_data.get("title", task_id)
+
+    print(f"\nTask: {title}")
+
+    try:
+        actual_str = input("Actual minutes: ").strip()
+        quality_str = input("Quality 1–5:    ").strip()
+        energy_str = input("Energy 1–5:     ").strip()
+    except (KeyboardInterrupt, EOFError):
+        print("\nAborted.")
+        sys.exit(0)
+
+    try:
+        actual_minutes = int(actual_str)
+        completion_quality = int(quality_str)
+        energy_level = int(energy_str)
+    except ValueError:
+        print("Invalid input — expected integers.", file=sys.stderr)
+        sys.exit(1)
+
+    _post(f"/api/tasks/{task_id}/complete", {
+        "actual_minutes": actual_minutes,
+        "completion_quality": completion_quality,
+        "energy_level_at_start": energy_level,
+    })
+
+    print("✓ Done. Learning recorded.\n")
+
+
+# ── dispatch ─────────────────────────────────────────────────────────────────
+
+USAGE = """\
+Usage:
+  eden today           Show today's schedule
+  eden next            Show the current recommended task
+  eden add "<text>"    Add a task via natural language
+  eden done [task_id]  Mark current (or specified) task complete
+"""
+
+def main():
+    args = sys.argv[1:]
+
+    if not args:
+        print(USAGE)
+        sys.exit(0)
+
+    cmd = args[0]
+
+    if cmd == "today":
+        cmd_today()
+    elif cmd == "next":
+        cmd_next()
+    elif cmd == "add":
+        if len(args) < 2:
+            print('Usage: eden add "<text>"', file=sys.stderr)
+            sys.exit(1)
+        cmd_add(args[1])
+    elif cmd == "done":
+        task_id = args[1] if len(args) > 1 else None
+        cmd_done(task_id)
+    else:
+        print(f"Unknown command: {cmd}\n", file=sys.stderr)
+        print(USAGE)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
