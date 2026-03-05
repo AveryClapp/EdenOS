@@ -27,6 +27,10 @@ stop:
 test:
     source .venv/bin/activate && pytest tests/ -q
 
+# Run Eden CLI (e.g. just eden today)
+eden *args:
+    cli/eden {{args}}
+
 # Run database migrations
 migrate:
     source .venv/bin/activate && alembic upgrade head
