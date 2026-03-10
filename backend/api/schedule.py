@@ -1,7 +1,7 @@
 import json
 import uuid
 from datetime import datetime, date, time, timedelta
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend.db import get_db

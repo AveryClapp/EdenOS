@@ -2,11 +2,12 @@ import uuid
 import json
 from datetime import date, datetime, time, timedelta
 
-import anthropic
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.db import get_db
+from backend.intelligence.client import EdenClient
 from backend.intelligence.context import build_context_snapshot
 from backend.intelligence.prompts import PLAN_GENERATION_PROMPT
 from backend.models.schedule_block import ScheduleBlock
@@ -51,9 +52,9 @@ Tasks to consider scheduling: {json.dumps(task_list)}
 
 Propose a schedule for {target_date}."""
 
-    client = anthropic.Anthropic()
-    msg = client.messages.create(
-        model="claude-opus-4-6",
+    client = EdenClient()
+    msg = client._client.messages.create(
+        model=settings.llm_model,
         max_tokens=2048,
         system=PLAN_GENERATION_PROMPT,
         messages=[{"role": "user", "content": user_content}],

@@ -79,7 +79,6 @@ def _ensure_general_goal(db: Session) -> str:
 def _execute_tool(name: str, inp: dict, db: Session) -> None:
     """Execute a single approved tool action against the DB."""
     from backend.models.schedule_block import ScheduleBlock
-    from backend.scheduler.engine import run as run_engine
     from backend.scheduler.priority import recompute_all_priorities
     import uuid
 
@@ -146,10 +145,8 @@ def _execute_tool(name: str, inp: dict, db: Session) -> None:
         recompute_all_priorities(db)
 
     elif name == "run_scheduler":
-        db.commit()
-        run_engine(db)
-        recompute_all_priorities(db)
-        db.commit()
+        from backend.api.schedule import _run_scheduler_job
+        _run_scheduler_job(db)
 
 
 @router.post("", response_model=ChatResponse)
