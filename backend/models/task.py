@@ -32,7 +32,7 @@ class Task(Base):
     deadline: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     recurrence_rule: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source: Mapped[str] = mapped_column(
-        Enum("manual", "github", "gcal", name="task_source"),
+        Enum("manual", "github", "gcal", "outlook", name="task_source"),
         nullable=False,
         default="manual",
     )

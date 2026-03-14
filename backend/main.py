@@ -23,6 +23,8 @@ from backend.api.whoop import router as whoop_router
 from backend.api.memory import router as memory_router
 from backend.api.plan import router as plan_router
 from backend.api.now import router as now_router
+from backend.api.gcal import router as gcal_router, _sync_gcal
+from backend.api.outlook import router as outlook_router, _sync_outlook
 from backend.config import settings
 
 
@@ -50,17 +52,34 @@ async def _scheduler_loop() -> None:
             db.close()
 
 
+async def _sync_loop() -> None:
+    """Background task: sync GCal and Outlook every interval."""
+    while True:
+        await asyncio.sleep(settings.sync_interval_seconds)
+        for fn, label in [(_sync_gcal, "gcal"), (_sync_outlook, "outlook")]:
+            db = SessionLocal()
+            try:
+                fn(db)
+            except Exception as exc:
+                print(f"[{label}] sync failed: {exc}")
+            finally:
+                db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     alembic_cfg = AlembicConfig("alembic.ini")
     alembic_command.upgrade(alembic_cfg, "head")
-    task = asyncio.create_task(_scheduler_loop())
+    scheduler_task = asyncio.create_task(_scheduler_loop())
+    sync_task = asyncio.create_task(_sync_loop())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    scheduler_task.cancel()
+    sync_task.cancel()
+    for t in (scheduler_task, sync_task):
+        try:
+            await t
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="Eden", version="0.1.0", lifespan=lifespan)
@@ -78,6 +97,8 @@ app.include_router(whoop_router)
 app.include_router(memory_router)
 app.include_router(plan_router)
 app.include_router(now_router)
+app.include_router(gcal_router)
+app.include_router(outlook_router)
 
 
 @app.get("/health")
