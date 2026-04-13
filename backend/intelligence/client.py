@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.intelligence.context import build_context_snapshot
-from backend.intelligence.prompts import SYSTEM_PROMPT, PLAN_DAY_SYSTEM_PROMPT, EDEN_TOOLS, format_chat_prompt, format_plan_day_prompt
+from backend.intelligence.prompts import SYSTEM_PROMPT, SESSION_OPEN_PROMPT, PLAN_DAY_SYSTEM_PROMPT, EDEN_TOOLS, format_chat_prompt, format_plan_day_prompt
 
 
 class EdenClient:
@@ -21,19 +21,30 @@ class EdenClient:
     def __init__(self):
         self._client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
+    SESSION_OPEN_TOKEN = "__session_open__"
+
     def chat(self, user_message: str, db: Session, now=None) -> dict:
         """
         Send a user message to the LLM with full context and tools injected.
         Returns a dict with 'reasoning', 'content', and 'tool_uses' keys.
         tool_uses is a list of {id, name, input} dicts — NOT executed here.
+
+        If user_message == SESSION_OPEN_TOKEN, uses SESSION_OPEN_PROMPT to
+        generate Eden's temporal-aware opening message.
         """
         snapshot = build_context_snapshot(db, now=now)
-        prompt = format_chat_prompt(user_message, snapshot)
+
+        if user_message == self.SESSION_OPEN_TOKEN:
+            system = SYSTEM_PROMPT + "\n\n" + SESSION_OPEN_PROMPT
+            prompt = format_chat_prompt("Open a new session. Greet the user based on the temporal context.", snapshot)
+        else:
+            system = SYSTEM_PROMPT
+            prompt = format_chat_prompt(user_message, snapshot)
 
         response = self._client.messages.create(
             model=settings.llm_model,
             max_tokens=2048,
-            system=SYSTEM_PROMPT,
+            system=system,
             tools=EDEN_TOOLS,
             messages=[{"role": "user", "content": prompt}],
         )
