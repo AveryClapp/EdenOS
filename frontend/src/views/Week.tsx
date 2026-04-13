@@ -129,6 +129,16 @@ function DayColumn({
 
 export default function Week() {
   const [weekOffset, setWeekOffset] = useState(0)
+  const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set())
+
+  function toggleSource(src: string) {
+    setHiddenSources(prev => {
+      const next = new Set(prev)
+      if (next.has(src)) next.delete(src)
+      else next.add(src)
+      return next
+    })
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -151,6 +161,9 @@ export default function Week() {
   const taskMap = Object.fromEntries(tasks.map(t => [t.id, t]))
   const weekDates = Array.from({ length: 7 }, (_, i) => offsetDate(startDate, i))
   const totalBlocks = (schedule?.week ?? []).length
+
+  const allWeekBlocks = schedule?.week ?? []
+  const calSources = Array.from(new Set(allWeekBlocks.map(b => b.cal_source ?? 'eden')))
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -202,11 +215,34 @@ export default function Week() {
         ))}
       </div>
 
+      {/* Calendar source filter */}
+      {calSources.length > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 20px', borderBottom: '1px solid rgba(0,186,220,0.05)', flexShrink: 0 }}>
+          {calSources.map(src => {
+            const active = !hiddenSources.has(src)
+            const srcLabels: Record<string, string> = { gcal: 'GCAL', outlook: 'OUTLOOK', eden: 'EDEN' }
+            return (
+              <button key={src} onClick={() => toggleSource(src)} style={{
+                fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em',
+                color: active ? '#00badc' : '#1e4d6b',
+                background: active ? 'rgba(0,186,220,0.08)' : 'transparent',
+                border: `1px solid ${active ? 'rgba(0,186,220,0.25)' : 'rgba(0,186,220,0.06)'}`,
+                borderRadius: 2, padding: '2px 7px', cursor: 'pointer', transition: 'all 0.15s',
+              }}>
+                {srcLabels[src] ?? src.toUpperCase()}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Grid */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {weekDates.map(date => {
           const ds = isoDate(date)
-          const dayBlocks = (schedule?.week ?? []).filter(b => b.date === ds)
+          const dayBlocks = allWeekBlocks.filter(
+            b => b.date === ds && !hiddenSources.has(b.cal_source ?? 'eden')
+          )
           return (
             <DayColumn
               key={ds}

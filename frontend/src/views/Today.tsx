@@ -291,7 +291,24 @@ export default function Today() {
     },
   })
 
-  const todayBlocks = schedule?.today ?? []
+  const [hiddenSources, setHiddenSources] = useState<Set<string>>(new Set())
+
+  const allTodayBlocks = schedule?.today ?? []
+  const todayBlocks = allTodayBlocks.filter(b => {
+    const src = b.cal_source ?? 'eden'
+    return !hiddenSources.has(src)
+  })
+
+  const calSources = Array.from(new Set(allTodayBlocks.map(b => b.cal_source ?? 'eden')))
+
+  function toggleSource(src: string) {
+    setHiddenSources(prev => {
+      const next = new Set(prev)
+      if (next.has(src)) next.delete(src)
+      else next.add(src)
+      return next
+    })
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -311,6 +328,27 @@ export default function Today() {
           {running ? 'RUNNING···' : 'RE-RUN SCHEDULER'}
         </button>
       </div>
+
+      {/* Calendar source filter */}
+      {calSources.length > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 20px', borderBottom: '1px solid rgba(0,186,220,0.05)', flexShrink: 0 }}>
+          {calSources.map(src => {
+            const active = !hiddenSources.has(src)
+            const srcLabels: Record<string, string> = { gcal: 'GCAL', outlook: 'OUTLOOK', eden: 'EDEN' }
+            return (
+              <button key={src} onClick={() => toggleSource(src)} style={{
+                fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.1em',
+                color: active ? '#00badc' : '#1e4d6b',
+                background: active ? 'rgba(0,186,220,0.08)' : 'transparent',
+                border: `1px solid ${active ? 'rgba(0,186,220,0.25)' : 'rgba(0,186,220,0.06)'}`,
+                borderRadius: 2, padding: '2px 7px', cursor: 'pointer', transition: 'all 0.15s',
+              }}>
+                {srcLabels[src] ?? src.toUpperCase()}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Intent input */}
       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(0,186,220,0.06)', flexShrink: 0 }}>

@@ -9,5 +9,5 @@ export const syncWhoop = () =>
 
 // Connect navigates the browser to the OAuth URL — not an apiFetch call
 export const connectWhoop = () => {
-  window.location.href = `${import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'}/api/whoop/connect`
+  window.location.href = `${import.meta.env.VITE_API_BASE ?? 'http://localhost:8500'}/api/whoop/connect`
 }

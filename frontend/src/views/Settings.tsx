@@ -5,6 +5,8 @@ import { getUserProfile, updateUserProfile, getEnergyDefaults } from '../api/use
 import type { UserProfile } from '../types'
 import { listAvailability, createAvailability, deleteAvailability } from '../api/availability'
 import { getWhoopStatus, syncWhoop, connectWhoop } from '../api/whoop'
+import { getGCalStatus, syncGCal, connectGCal } from '../api/gcal'
+import { getOutlookStatus, syncOutlook, connectOutlook } from '../api/outlook'
 import type { WhoopStatus, UserMemory } from '../types'
 import { listMemory, createMemory, deleteMemory } from '../api/memory'
 
@@ -333,6 +335,80 @@ function WhoopSection() {
   )
 }
 
+// ─── GCal ─────────────────────────────────────────────────────────────────────
+
+function GCalSection() {
+  const qc = useQueryClient()
+  const { data: status, isLoading } = useQuery({
+    queryKey: ['gcal-status'],
+    queryFn: getGCalStatus,
+    refetchInterval: 5 * 60_000,
+  })
+  const { mutate: sync, isPending: syncing } = useMutation({
+    mutationFn: syncGCal,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gcal-status'] }),
+  })
+
+  if (isLoading) return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86' }}>···</span>
+
+  if (!status?.connected) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 300, color: '#5fa8c8', margin: 0, lineHeight: 1.6 }}>
+          Import external events and export Eden blocks to Google Calendar. Requires <code style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#00badc' }}>GCAL_CLIENT_ID</code> in .env.
+        </p>
+        <button onClick={connectGCal} style={btnPrimary}>Connect Google Calendar</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', color: '#00cc6a' }}>● CONNECTED</span>
+      <button onClick={() => sync()} disabled={syncing} style={btnGhost}>
+        {syncing ? 'SYNCING···' : 'SYNC NOW'}
+      </button>
+    </div>
+  )
+}
+
+// ─── Outlook ──────────────────────────────────────────────────────────────────
+
+function OutlookSection() {
+  const qc = useQueryClient()
+  const { data: status, isLoading } = useQuery({
+    queryKey: ['outlook-status'],
+    queryFn: getOutlookStatus,
+    refetchInterval: 5 * 60_000,
+  })
+  const { mutate: sync, isPending: syncing } = useMutation({
+    mutationFn: syncOutlook,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['outlook-status'] }),
+  })
+
+  if (isLoading) return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86' }}>···</span>
+
+  if (!status?.connected) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 300, color: '#5fa8c8', margin: 0, lineHeight: 1.6 }}>
+          Import external events and export Eden blocks to Outlook. Requires <code style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#00badc' }}>MS_CLIENT_ID</code> in .env.
+        </p>
+        <button onClick={connectOutlook} style={btnPrimary}>Connect Outlook</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', color: '#00cc6a' }}>● CONNECTED</span>
+      <button onClick={() => sync()} disabled={syncing} style={btnGhost}>
+        {syncing ? 'SYNCING···' : 'SYNC NOW'}
+      </button>
+    </div>
+  )
+}
+
 // ─── Memory ───────────────────────────────────────────────────────────────────
 
 const CAT_COLOR: Record<string, string> = {
@@ -444,6 +520,18 @@ export default function Settings() {
           <div style={{ padding: '20px 24px' }}>
             <SectionHeader>Whoop</SectionHeader>
             <WhoopSection />
+          </div>
+        </div>
+
+        {/* 2-column row: GCal + Outlook */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, borderBottom: '1px solid rgba(0,186,220,0.08)' }}>
+          <div style={{ padding: '20px 24px', borderRight: '1px solid rgba(0,186,220,0.08)' }}>
+            <SectionHeader>Google Calendar</SectionHeader>
+            <GCalSection />
+          </div>
+          <div style={{ padding: '20px 24px' }}>
+            <SectionHeader>Outlook</SectionHeader>
+            <OutlookSection />
           </div>
         </div>
 

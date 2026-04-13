@@ -92,6 +92,7 @@ def _sync_outlook(db: Session) -> dict:
                 label=label,
                 auto_generated=False,
                 overridden_by_user=False,
+                cal_source="outlook",
             ))
             imported += 1
 

@@ -18,18 +18,18 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     gcal_client_id: str = ""
     gcal_client_secret: str = ""
-    gcal_redirect_uri: str = "http://localhost:8000/api/gcal/callback"
+    gcal_redirect_uri: str = "http://localhost:8500/api/gcal/callback"
     ms_client_id: str = ""
     ms_client_secret: str = ""
     ms_tenant_id: str = ""
-    ms_redirect_uri: str = "http://localhost:8000/api/outlook/callback"
+    ms_redirect_uri: str = "http://localhost:8500/api/outlook/callback"
     github_token: str = ""
     github_client_id: str = ""
     github_client_secret: str = ""
 
     whoop_client_id: str = ""
     whoop_client_secret: str = ""
-    whoop_redirect_uri: str = "http://localhost:8000/api/whoop/callback"
+    whoop_redirect_uri: str = "http://localhost:8500/api/whoop/callback"
 
     def validate_secrets(self) -> None:
         if self.environment != "development" and self.secret_key in _INSECURE_DEFAULTS:

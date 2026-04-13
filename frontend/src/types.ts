@@ -56,6 +56,7 @@ export interface ScheduleBlock {
   overridden_by_user: boolean
   is_draft: boolean
   label?: string | null
+  cal_source?: 'gcal' | 'outlook' | null
 }
 
 export interface ScheduleResponse {
@@ -142,6 +143,14 @@ export interface WhoopToday {
 export interface WhoopStatus {
   connected: boolean
   today: WhoopToday | null
+}
+
+export interface GCalStatus {
+  connected: boolean
+}
+
+export interface OutlookStatus {
+  connected: boolean
 }
 
 export interface UserMemory {

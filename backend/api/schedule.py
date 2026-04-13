@@ -38,6 +38,7 @@ def _serialize_block(b):
         "overridden_by_user": b.overridden_by_user,
         "is_draft": getattr(b, "is_draft", False),
         "label": getattr(b, "label", None),
+        "cal_source": getattr(b, "cal_source", None),
     }
 
 
