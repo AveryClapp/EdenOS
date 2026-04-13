@@ -4,10 +4,10 @@ import { listGoals, createGoal, updateGoal, deleteGoal } from '../api/goals'
 import type { Goal } from '../types'
 
 const STATUS_PILL: Record<string, { bg: string; color: string }> = {
-  active:  { bg: '#142810', color: '#4a8c5c' },
-  paused:  { bg: '#d8c8a0', color: '#8a6a10' },
-  done:    { bg: '#ddd3be', color: '#7a6550' },
-  dropped: { bg: '#ddd3be', color: '#8a7860' },
+  active:  { bg: '#14532d', color: '#16a34a' },
+  paused:  { bg: '#1c1a07', color: '#d97706' },
+  done:    { bg: '#18181b', color: '#52525b' },
+  dropped: { bg: '#18181b', color: '#3f3f46' },
 }
 
 const TIER_LABEL: Record<string, string> = {
@@ -47,13 +47,13 @@ function GoalRow({
     <div>
       <div
         className="flex items-center gap-3 py-2 pr-6 text-sm border-b transition-colors group"
-        style={{ paddingLeft: `${24 + depth * 20}px`, borderColor: '#b0a085' }}
-        onMouseEnter={e => (e.currentTarget.style.background = '#c4b494')}
+        style={{ paddingLeft: `${24 + depth * 20}px`, borderColor: '#27272a' }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#111113')}
         onMouseLeave={e => (e.currentTarget.style.background = '')}
       >
         <span
           className="text-xs px-2 py-0.5 rounded-full shrink-0 w-16 text-center"
-          style={STATUS_PILL[goal.status] ?? { bg: '#ddd3be', color: '#7a6550' }}
+          style={STATUS_PILL[goal.status] ?? { bg: '#27272a', color: '#71717a' }}
         >
           {goal.status}
         </span>
@@ -62,7 +62,7 @@ function GoalRow({
           <input
             autoFocus
             className="flex-1 text-sm px-2 py-0.5 border outline-none"
-            style={{ background: '#d4c4aa', borderColor: '#a89070', color: '#1a1208', borderRadius: '6px' }}
+            style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => {
@@ -74,38 +74,38 @@ function GoalRow({
         ) : (
           <span
             className="flex-1 cursor-pointer"
-            style={{ color: isInactive ? '#8a7860' : '#1a1208', textDecoration: isInactive ? 'line-through' : 'none' }}
+            style={{ color: isInactive ? '#52525b' : '#e4e4e7', textDecoration: isInactive ? 'line-through' : 'none' }}
             onClick={() => setEditing(true)}
           >
             {goal.title}
           </span>
         )}
 
-        <span className="text-xs shrink-0 w-14 text-right" style={{ color: '#6b5040' }}>{TIER_LABEL[goal.tier]}</span>
-        <span className="text-xs font-mono shrink-0 w-20 text-right" style={{ color: '#6b5040' }}>{goal.target_date}</span>
-        <span className="text-xs font-mono shrink-0 w-6 text-right" style={{ color: '#6b5040' }}>{goal.weight.toFixed(1)}</span>
+        <span className="text-xs shrink-0 w-14 text-right" style={{ color: '#71717a' }}>{TIER_LABEL[goal.tier]}</span>
+        <span className="text-xs font-mono shrink-0 w-20 text-right" style={{ color: '#71717a' }}>{goal.target_date}</span>
+        <span className="text-xs font-mono shrink-0 w-6 text-right" style={{ color: '#71717a' }}>{goal.weight.toFixed(1)}</span>
 
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs w-28 justify-end shrink-0">
           {goal.status === 'active' && (
             <>
-              <button className="transition-colors" style={{ color: '#6b5040' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#8a7860')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6b5040')}
+              <button className="transition-colors" style={{ color: '#71717a' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#71717a')}
                 onClick={() => patch({ status: 'done' })}>done</button>
-              <button className="transition-colors" style={{ color: '#6b5040' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#8a7860')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#6b5040')}
+              <button className="transition-colors" style={{ color: '#71717a' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#71717a')}
                 onClick={() => patch({ status: 'paused' })}>pause</button>
             </>
           )}
           {goal.status === 'paused' && (
-            <button className="transition-colors" style={{ color: '#8a6a10' }}
+            <button className="transition-colors" style={{ color: '#d97706' }}
               onClick={() => patch({ status: 'active' })}>resume</button>
           )}
           <button
-            className="transition-colors" style={{ color: '#8a7860' }}
+            className="transition-colors" style={{ color: '#52525b' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#52525b')}
             onClick={() => { if (confirm(`Delete "${goal.title}"?`)) remove() }}
           >del</button>
         </div>
@@ -142,10 +142,10 @@ function AddGoalForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }) {
   })
 
   const inputCls = "text-xs px-2 py-1.5 border outline-none"
-  const inputStyle = { background: '#d4c4aa', borderColor: '#a89070', color: '#1a1208', borderRadius: '8px' }
+  const inputStyle = { background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }
 
   return (
-    <div className="px-6 py-3 border-b text-xs" style={{ background: '#c4b494', borderColor: '#b0a085' }}>
+    <div className="px-6 py-3 border-b text-xs" style={{ background: '#111113', borderColor: '#27272a' }}>
       <div className="flex items-center gap-2.5 flex-wrap">
         <input autoFocus placeholder="Goal title" className={`${inputCls} flex-1 min-w-48`} style={inputStyle}
           value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') onDone() }} />
@@ -158,14 +158,14 @@ function AddGoalForm({ goals, onDone }: { goals: Goal[]; onDone: () => void }) {
           {goals.map((g) => (<option key={g.id} value={g.id}>{g.title}</option>))}
         </select>
         <input type="date" className={inputCls} style={inputStyle} value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
-        <span style={{ color: '#6b5040' }}>weight</span>
+        <span style={{ color: '#71717a' }}>weight</span>
         <input className={`w-14 ${inputCls}`} style={inputStyle} value={weight} onChange={(e) => setWeight(e.target.value)} />
         <button onClick={() => mutate()} disabled={isPending || !title || !targetDate}
           className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-          style={{ background: isPending || !title || !targetDate ? '#bfad90' : '#7c3400', color: isPending || !title || !targetDate ? '#8a7860' : '#f0e8d8' }}>
+          style={{ background: isPending || !title || !targetDate ? '#27272a' : '#7c2d12', color: isPending || !title || !targetDate ? '#52525b' : '#fbbf24' }}>
           {isPending ? '…' : 'Add goal'}
         </button>
-        <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#6b5040' }}>Cancel</button>
+        <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#71717a' }}>Cancel</button>
         {error && <span className="text-red-500 text-xs">{error}</span>}
       </div>
     </div>
@@ -199,17 +199,17 @@ export default function Goals() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: '#b0a085' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#1a1208' }}>Goals</span>
+      <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: '#27272a' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#f4f4f5', letterSpacing: '-0.02em' }}>Goals</span>
         <button onClick={() => setAdding(true)}
           className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-          style={{ background: '#7c3400', color: '#f0e8d8' }}>
+          style={{ background: '#7c2d12', color: '#fbbf24' }}>
           + Add goal
         </button>
       </div>
 
       {/* Column headers */}
-      <div className="flex items-center gap-3 px-6 pr-6 py-1.5 text-xs border-b shrink-0" style={{ color: '#8a7860', borderColor: '#b0a085' }}>
+      <div className="flex items-center gap-3 px-6 pr-6 py-1.5 text-xs border-b shrink-0" style={{ color: '#3f3f46', borderColor: '#27272a' }}>
         <span className="w-16">status</span>
         <span className="flex-1">title</span>
         <span className="w-14 text-right">tier</span>
@@ -222,9 +222,9 @@ export default function Goals() {
 
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="px-6 py-4 text-xs" style={{ color: '#8a7860' }}>Loading…</div>
+          <div className="px-6 py-4 text-xs" style={{ color: '#52525b' }}>Loading…</div>
         ) : roots.length === 0 && !adding ? (
-          <div className="px-6 py-8 text-xs" style={{ color: '#8a7860' }}>
+          <div className="px-6 py-8 text-xs" style={{ color: '#52525b' }}>
             No goals yet — add your first one above.
           </div>
         ) : (

@@ -13,18 +13,18 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
 const inputStyle: React.CSSProperties = {
-  background: '#d4c4aa',
-  border: '1px solid #b0a085',
+  background: '#18181b',
+  border: '1px solid #27272a',
   borderRadius: 6,
-  color: '#1a1208',
+  color: '#f4f4f5',
   fontSize: 12,
   padding: '4px 8px',
   outline: 'none',
 }
 
 const btnPrimary: React.CSSProperties = {
-  background: '#7c3400',
-  color: '#f0e8d8',
+  background: '#7c2d12',
+  color: '#fbbf24',
   border: 'none',
   borderRadius: 6,
   fontSize: 11,
@@ -36,7 +36,7 @@ const btnPrimary: React.CSSProperties = {
 const btnGhost: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#6b5040',
+  color: '#71717a',
   fontSize: 11,
   cursor: 'pointer',
   padding: '4px 6px',
@@ -49,10 +49,10 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
       fontWeight: 600,
       letterSpacing: '0.1em',
       textTransform: 'uppercase',
-      color: '#8a7860',
+      color: '#52525b',
       marginBottom: 12,
       paddingBottom: 6,
-      borderBottom: '1px solid #b0a085',
+      borderBottom: '1px solid #27272a',
     }}>
       {children}
     </div>
@@ -109,7 +109,7 @@ function ScheduleSection() {
     <div className="space-y-3">
       <div className="flex gap-3">
         <div className="flex flex-col gap-1 flex-1">
-          <span style={{ fontSize: 10, color: '#6b5040' }}>Wake time</span>
+          <span style={{ fontSize: 10, color: '#71717a' }}>Wake time</span>
           <input
             type="time"
             value={wakeTimeStr}
@@ -118,7 +118,7 @@ function ScheduleSection() {
           />
         </div>
         <div className="flex flex-col gap-1 flex-1">
-          <span style={{ fontSize: 10, color: '#6b5040' }}>Chronotype</span>
+          <span style={{ fontSize: 10, color: '#71717a' }}>Chronotype</span>
           <select
             value={chronotype}
             onChange={e => setChronotype(e.target.value)}
@@ -137,7 +137,7 @@ function ScheduleSection() {
         <button
           onClick={() => applyDefaults()}
           disabled={applying}
-          style={{ ...btnGhost, color: applying ? '#a89070' : '#6b5040' }}
+          style={{ ...btnGhost, color: applying ? '#3f3f46' : '#71717a' }}
           title="Overwrites energy profile with science-based curve for your chronotype"
         >
           {applying ? 'Applying…' : 'Apply energy defaults'}
@@ -189,16 +189,16 @@ function AutonomySection() {
               textAlign: 'left',
               padding: '5px 8px',
               borderRadius: 6,
-              background: active ? '#bfad90' : 'transparent',
-              border: active ? '1px solid #a89070' : '1px solid transparent',
+              background: active ? '#18181b' : 'transparent',
+              border: active ? '1px solid #27272a' : '1px solid transparent',
               cursor: 'pointer',
             }}
           >
-            <span style={{ fontSize: 11, color: active ? '#7c3400' : '#8a7860', width: 14, flexShrink: 0 }}>
+            <span style={{ fontSize: 11, color: active ? '#fbbf24' : '#52525b', width: 14, flexShrink: 0 }}>
               {active ? '●' : '○'}
             </span>
-            <span style={{ fontSize: 11, color: active ? '#1a1208' : '#6b5040' }}>{label}</span>
-            <span style={{ fontSize: 10, color: '#8a7860', marginLeft: 2 }}>{hint}</span>
+            <span style={{ fontSize: 11, color: active ? '#e4e4e7' : '#71717a' }}>{label}</span>
+            <span style={{ fontSize: 10, color: '#52525b', marginLeft: 2 }}>{hint}</span>
           </button>
         )
       })}
@@ -230,21 +230,21 @@ function AvailabilitySection() {
   return (
     <div className="space-y-2">
       {windows.length === 0 && !adding && (
-        <p style={{ fontSize: 11, color: '#8a7860' }}>Defaults to 6am–10pm every day.</p>
+        <p style={{ fontSize: 11, color: '#52525b' }}>Defaults to 6am–10pm every day.</p>
       )}
       {windows.map(w => (
         <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
-          <span style={{ color: '#6b5040', width: 30, flexShrink: 0 }}>
+          <span style={{ color: '#71717a', width: 30, flexShrink: 0 }}>
             {w.day_of_week !== null ? DAYS[w.day_of_week] : 'All'}
           </span>
-          <span style={{ color: '#1a1208' }}>{w.start_time.slice(0, 5)} – {w.end_time.slice(0, 5)}</span>
-          <span style={{ color: w.is_available ? '#4a8c5c' : '#8a7860' }}>
+          <span style={{ color: '#e4e4e7' }}>{w.start_time.slice(0, 5)} – {w.end_time.slice(0, 5)}</span>
+          <span style={{ color: w.is_available ? '#16a34a' : '#52525b' }}>
             {w.is_available ? 'available' : 'blocked'}
           </span>
-          {w.note && <span style={{ color: '#8a7860', flex: 1 }}>{w.note}</span>}
-          <button onClick={() => del(w.id)} style={{ ...btnGhost, marginLeft: 'auto', color: '#8a7860' }}
+          {w.note && <span style={{ color: '#52525b', flex: 1 }}>{w.note}</span>}
+          <button onClick={() => del(w.id)} style={{ ...btnGhost, marginLeft: 'auto', color: '#52525b' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#8a7860')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#52525b')}
           >×</button>
         </div>
       ))}
@@ -256,7 +256,7 @@ function AvailabilitySection() {
             {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
           </select>
           <input type="time" value={start} onChange={e => setStart(e.target.value)} style={inputStyle} />
-          <span style={{ color: '#8a7860', fontSize: 11 }}>–</span>
+          <span style={{ color: '#52525b', fontSize: 11 }}>–</span>
           <input type="time" value={end} onChange={e => setEnd(e.target.value)} style={inputStyle} />
           <button onClick={() => add()} disabled={addPending} style={btnPrimary}>{addPending ? '…' : 'Add'}</button>
           <button onClick={() => setAdding(false)} style={btnGhost}>Cancel</button>
@@ -273,7 +273,7 @@ function AvailabilitySection() {
 // ─── Whoop ────────────────────────────────────────────────────────────────────
 
 const RECOVERY_COLORS: Record<string, string> = {
-  green: '#4a8c5c', yellow: '#8a6a10', red: '#c0392b',
+  green: '#16a34a', yellow: '#d97706', red: '#dc2626',
 }
 
 function WhoopSection() {
@@ -288,13 +288,13 @@ function WhoopSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['whoop-status'] }),
   })
 
-  if (isLoading) return <span style={{ fontSize: 11, color: '#8a7860' }}>loading…</span>
+  if (isLoading) return <span style={{ fontSize: 11, color: '#52525b' }}>loading…</span>
 
   if (!status?.connected) {
     return (
       <div className="space-y-2">
-        <p style={{ fontSize: 11, color: '#8a7860' }}>
-          Adjusts energy model from daily recovery score. Needs <code style={{ color: '#6b5040' }}>WHOOP_CLIENT_ID</code> in .env.
+        <p style={{ fontSize: 11, color: '#52525b' }}>
+          Adjusts energy model from daily recovery score. Needs <code style={{ color: '#71717a' }}>WHOOP_CLIENT_ID</code> in .env.
         </p>
         <button onClick={connectWhoop} style={btnPrimary}>Connect Whoop</button>
       </div>
@@ -305,7 +305,7 @@ function WhoopSection() {
   return (
     <div className="space-y-2">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 11, color: '#4a8c5c' }}>● connected</span>
+        <span style={{ fontSize: 11, color: '#16a34a' }}>● connected</span>
         <button onClick={() => sync()} disabled={syncing} style={btnGhost}>
           {syncing ? 'syncing…' : 'Sync now'}
         </button>
@@ -313,21 +313,21 @@ function WhoopSection() {
       {t ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px 16px' }}>
           {[
-            ['recovery', t.recovery_score != null ? `${t.recovery_score}%` : '—', t.recommendation ? RECOVERY_COLORS[t.recommendation] : '#6b5040'],
-            ['hrv', t.hrv_rms != null ? t.hrv_rms.toFixed(1) : '—', '#1a1208'],
-            ['rhr', t.resting_hr ?? '—', '#1a1208'],
-            ['strain', t.strain_score != null ? t.strain_score.toFixed(1) : '—', '#1a1208'],
-            ['sleep', t.sleep_quality_score != null ? `${t.sleep_quality_score}%` : '—', '#1a1208'],
-            ['wake', t.actual_wake_time ?? '—', '#1a1208'],
+            ['recovery', t.recovery_score != null ? `${t.recovery_score}%` : '—', t.recommendation ? RECOVERY_COLORS[t.recommendation] : '#71717a'],
+            ['hrv', t.hrv_rms != null ? t.hrv_rms.toFixed(1) : '—', '#e4e4e7'],
+            ['rhr', t.resting_hr ?? '—', '#e4e4e7'],
+            ['strain', t.strain_score != null ? t.strain_score.toFixed(1) : '—', '#e4e4e7'],
+            ['sleep', t.sleep_quality_score != null ? `${t.sleep_quality_score}%` : '—', '#e4e4e7'],
+            ['wake', t.actual_wake_time ?? '—', '#e4e4e7'],
           ].map(([label, val, color]) => (
             <div key={label as string} style={{ fontSize: 11 }}>
-              <span style={{ color: '#8a7860' }}>{label} </span>
+              <span style={{ color: '#52525b' }}>{label} </span>
               <span style={{ color: color as string }}>{val as string}</span>
             </div>
           ))}
         </div>
       ) : (
-        <p style={{ fontSize: 11, color: '#8a7860' }}>No data today — sync to fetch.</p>
+        <p style={{ fontSize: 11, color: '#52525b' }}>No data today — sync to fetch.</p>
       )}
     </div>
   )
@@ -336,11 +336,11 @@ function WhoopSection() {
 // ─── Memory ───────────────────────────────────────────────────────────────────
 
 const CAT_COLOR: Record<string, string> = {
-  preference: '#6b9fd4',
-  constraint: '#8a6a10',
-  goal_context: '#4a8c5c',
-  personal: '#9b72c4',
-  signal: '#c0392b',
+  preference: '#60a5fa',
+  constraint: '#d97706',
+  goal_context: '#16a34a',
+  personal: '#a78bfa',
+  signal: '#dc2626',
 }
 
 function MemorySection() {
@@ -362,17 +362,17 @@ function MemorySection() {
   return (
     <div className="space-y-2">
       {memories.length === 0 && !adding && (
-        <p style={{ fontSize: 11, color: '#8a7860' }}>None yet — Eden learns from your chat conversations.</p>
+        <p style={{ fontSize: 11, color: '#52525b' }}>None yet — Eden learns from your chat conversations.</p>
       )}
       {memories.map(m => (
-        <div key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 11, paddingBottom: 6, borderBottom: '1px solid #b0a085' }}>
-          <span style={{ color: CAT_COLOR[m.category] ?? '#6b5040', width: 80, flexShrink: 0, fontSize: 10 }}>
+        <div key={m.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 11, paddingBottom: 6, borderBottom: '1px solid #27272a' }}>
+          <span style={{ color: CAT_COLOR[m.category] ?? '#71717a', width: 80, flexShrink: 0, fontSize: 10 }}>
             {m.category}
           </span>
-          <span style={{ color: '#5a4535', flex: 1, lineHeight: 1.5 }}>{m.content}</span>
-          <button onClick={() => remove(m.id)} style={{ ...btnGhost, color: '#a89070', flexShrink: 0 }}
+          <span style={{ color: '#a1a1aa', flex: 1, lineHeight: 1.5 }}>{m.content}</span>
+          <button onClick={() => remove(m.id)} style={{ ...btnGhost, color: '#3f3f46', flexShrink: 0 }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#a89070')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#3f3f46')}
           >×</button>
         </div>
       ))}
@@ -416,16 +416,16 @@ function MemorySection() {
 export default function Settings() {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center px-6 py-5 border-b shrink-0" style={{ borderColor: '#b0a085' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#1a1208' }}>
+      <div className="flex items-center px-6 py-5 border-b shrink-0" style={{ borderColor: '#27272a' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 300, color: '#f4f4f5', letterSpacing: '-0.02em' }}>
           Settings
         </span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {/* 2-column row: Schedule + Autonomy */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, borderBottom: '1px solid #b0a085' }}>
-          <div style={{ padding: '20px 24px', borderRight: '1px solid #b0a085' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, borderBottom: '1px solid #27272a' }}>
+          <div style={{ padding: '20px 24px', borderRight: '1px solid #27272a' }}>
             <SectionHeader>Schedule</SectionHeader>
             <ScheduleSection />
           </div>
@@ -436,8 +436,8 @@ export default function Settings() {
         </div>
 
         {/* 2-column row: Availability + Whoop */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, borderBottom: '1px solid #b0a085' }}>
-          <div style={{ padding: '20px 24px', borderRight: '1px solid #b0a085' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, borderBottom: '1px solid #27272a' }}>
+          <div style={{ padding: '20px 24px', borderRight: '1px solid #27272a' }}>
             <SectionHeader>Availability</SectionHeader>
             <AvailabilitySection />
           </div>

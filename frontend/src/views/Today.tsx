@@ -54,26 +54,26 @@ function CompleteForm({
   })
 
   return (
-    <div className="pl-20 pr-6 py-2.5 flex items-center gap-3 text-xs border-b" style={{ background: '#d4c4aa', borderColor: '#b0a085' }}>
-      <span style={{ color: '#6b5040' }}>mins</span>
+    <div className="pl-20 pr-6 py-2.5 flex items-center gap-3 text-xs border-b" style={{ background: '#111113', borderColor: '#27272a' }}>
+      <span style={{ color: '#71717a' }}>mins</span>
       <input
         className="w-14 text-xs px-2 py-1 border"
-        style={{ background: '#bfad90', borderColor: '#a89070', color: '#1a1208', borderRadius: '6px' }}
+        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
         value={mins}
         onChange={(e) => setMins(e.target.value)}
       />
-      <span style={{ color: '#6b5040' }}>quality</span>
+      <span style={{ color: '#71717a' }}>quality</span>
       <input
         className="w-10 text-xs px-2 py-1 border"
-        style={{ background: '#bfad90', borderColor: '#a89070', color: '#1a1208', borderRadius: '6px' }}
+        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
         value={quality}
         onChange={(e) => setQuality(e.target.value)}
         type="number" min={1} max={5}
       />
-      <span style={{ color: '#6b5040' }}>energy</span>
+      <span style={{ color: '#71717a' }}>energy</span>
       <input
         className="w-10 text-xs px-2 py-1 border"
-        style={{ background: '#bfad90', borderColor: '#a89070', color: '#1a1208', borderRadius: '6px' }}
+        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
         value={energy}
         onChange={(e) => setEnergy(e.target.value)}
         type="number" min={1} max={5}
@@ -82,13 +82,13 @@ function CompleteForm({
         onClick={() => mutate()}
         disabled={isPending}
         className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-        style={{ background: isPending ? '#a89070' : '#7c3400', color: '#f0e8d8' }}
+        style={{ background: isPending ? '#3f3f46' : '#7c2d12', color: isPending ? '#71717a' : '#fbbf24' }}
       >
         {isPending ? '…' : 'Done'}
       </button>
-      <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#6b5040' }}
-        onMouseEnter={e => (e.currentTarget.style.color = '#8a7860')}
-        onMouseLeave={e => (e.currentTarget.style.color = '#6b5040')}
+      <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#71717a' }}
+        onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
+        onMouseLeave={e => (e.currentTarget.style.color = '#71717a')}
       >
         Cancel
       </button>
@@ -143,18 +143,18 @@ function NowStrip() {
 
   if (timerStart) {
     return (
-      <div className="border-b" style={{ borderColor: '#b0a085' }}>
-        <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ background: '#d4c4aa' }}>
+      <div className="border-b" style={{ borderColor: '#27272a' }}>
+        <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ background: '#111113' }}>
           <button
             onClick={() => setShowLog(true)}
             className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-            style={{ background: '#7c3400', color: '#f0e8d8' }}
+            style={{ background: '#7c2d12', color: '#fbbf24' }}
           >
             Stop &amp; log
           </button>
-          <span className="flex-1 truncate" style={{ color: '#1a1208' }}>{data.task.title}</span>
-          <span className="font-mono shrink-0" style={{ color: '#b87010' }}>{formatElapsed(elapsed)}</span>
-          <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5040' }}>
+          <span className="flex-1 truncate" style={{ color: '#e4e4e7' }}>{data.task.title}</span>
+          <span className="font-mono shrink-0" style={{ color: '#fbbf24' }}>{formatElapsed(elapsed)}</span>
+          <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>
             Abandon
           </button>
         </div>
@@ -177,23 +177,23 @@ function NowStrip() {
   }
 
   return (
-    <div className="px-6 py-3 flex items-center gap-4 text-xs border-b" style={{ background: '#c4b494', borderColor: '#b0a085' }}>
+    <div className="px-6 py-3 flex items-center gap-4 text-xs border-b" style={{ background: '#111113', borderColor: '#27272a' }}>
       <button
         onClick={handleOnIt}
         className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-        style={{ background: '#7c3400', color: '#f0e8d8' }}
+        style={{ background: '#7c2d12', color: '#fbbf24' }}
       >
         On it
       </button>
       <span className="flex-1 truncate">
-        <span style={{ color: '#1a1208' }}>{data.task.title}</span>
+        <span style={{ color: '#e4e4e7' }}>{data.task.title}</span>
         {' '}—{' '}
-        <span style={{ color: '#6b5040' }}>{data.reason}</span>
+        <span style={{ color: '#71717a' }}>{data.reason}</span>
       </span>
-      <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5040' }}>Skip</button>
-      <button onClick={handleNotNow} className="text-xs shrink-0 transition-colors" style={{ color: '#6b5040' }}>Not now</button>
+      <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>Skip</button>
+      <button onClick={handleNotNow} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>Not now</button>
       {skips >= 3 && (
-        <span className="text-xs shrink-0" style={{ color: '#b87010' }}>
+        <span className="text-xs shrink-0" style={{ color: '#d97706' }}>
           Day drifting — <a href="/plan" className="underline">replan?</a>
         </span>
       )}
@@ -207,18 +207,18 @@ function ProposalsStrip({ proposals, onAdd }: {
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ borderBottom: '1px solid #b0a085' }}>
+    <div style={{ borderBottom: '1px solid #27272a' }}>
       <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 24px', background: 'none', border: 'none', cursor: 'pointer' }}>
-        <span style={{ fontSize: 10, color: '#6b5040' }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, color: '#6b5040' }}>Suggested tasks ({proposals.length})</span>
+        <span style={{ fontSize: 10, color: '#52525b' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 11, color: '#52525b' }}>Suggested tasks ({proposals.length})</span>
       </button>
       {open && (
         <div style={{ padding: '0 24px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {proposals.map((p, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-              <span style={{ color: '#1a1208', flex: 1 }}>{p.title}</span>
-              <span style={{ color: '#6b5040' }}>{p.estimated_minutes}m</span>
-              <button onClick={() => onAdd(p)} style={{ fontSize: 11, color: '#7c3400', background: 'none', border: '1px solid #a89070', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>Add</button>
+              <span style={{ color: '#e4e4e7', flex: 1 }}>{p.title}</span>
+              <span style={{ color: '#71717a' }}>{p.estimated_minutes}m</span>
+              <button onClick={() => onAdd(p)} style={{ fontSize: 11, color: '#fbbf24', background: 'none', border: '1px solid #27272a', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>Add</button>
             </div>
           ))}
         </div>
@@ -230,7 +230,7 @@ function ProposalsStrip({ proposals, onAdd }: {
 function WhyStrip({ explanation }: { explanation: ScheduleExplanation }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ borderBottom: '1px solid #b0a085' }}>
+    <div style={{ borderBottom: '1px solid #27272a' }}>
       <button
         onClick={() => setOpen(v => !v)}
         style={{
@@ -245,11 +245,11 @@ function WhyStrip({ explanation }: { explanation: ScheduleExplanation }) {
           textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: 10, color: '#6b5040' }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, color: '#6b5040' }}>Why this schedule?</span>
+        <span style={{ fontSize: 10, color: '#52525b' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontSize: 11, color: '#52525b' }}>Why this schedule?</span>
       </button>
       {open && (
-        <div style={{ padding: '0 24px 12px', fontSize: 12, color: '#8a7860', lineHeight: 1.6 }}>
+        <div style={{ padding: '0 24px 12px', fontSize: 12, color: '#71717a', lineHeight: 1.6 }}>
           {explanation.summary}
         </div>
       )}
@@ -320,26 +320,26 @@ export default function Today() {
       <NowStrip />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: '#b0a085' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 300, color: '#1a1208', letterSpacing: '-0.01em' }}>
+      <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: '#27272a' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 300, color: '#f4f4f5', letterSpacing: '-0.02em' }}>
           {formatDate(new Date())}
         </span>
         <button
           onClick={() => runSched()}
           disabled={running}
           className="text-xs transition-colors"
-          style={{ color: running ? '#a89070' : '#6b5040' }}
+          style={{ color: running ? '#3f3f46' : '#52525b' }}
         >
           {running ? 'Running…' : 'Re-run scheduler'}
         </button>
       </div>
 
       {/* Intent input */}
-      <div className="px-6 py-3 border-b shrink-0" style={{ borderColor: '#b0a085' }}>
+      <div className="px-6 py-3 border-b shrink-0" style={{ borderColor: '#27272a' }}>
         <div className="flex items-center gap-3">
           <input
             className="flex-1 text-sm outline-none placeholder:opacity-40 bg-transparent"
-            style={{ color: '#1a1208' }}
+            style={{ color: '#e4e4e7' }}
             placeholder="What do you want to work on today?"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
@@ -350,15 +350,15 @@ export default function Today() {
             onClick={() => plan()}
             disabled={planning || !intent.trim()}
             className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-            style={{ background: planning || !intent.trim() ? '#bfad90' : '#7c3400', color: planning || !intent.trim() ? '#8a7860' : '#f0e8d8' }}
+            style={{ background: planning || !intent.trim() ? '#27272a' : '#7c2d12', color: planning || !intent.trim() ? '#52525b' : '#fbbf24' }}
           >
             {planning ? 'Planning…' : 'Plan'}
           </button>
         </div>
         {planResult && (
           <div className="mt-2 space-y-0.5">
-            <p className="text-xs" style={{ color: '#8a7860' }}>{planResult.summary}</p>
-            <p className="text-xs" style={{ color: '#6b5040' }}>
+            <p className="text-xs" style={{ color: '#71717a' }}>{planResult.summary}</p>
+            <p className="text-xs" style={{ color: '#52525b' }}>
               {[
                 planResult.created_projects > 0 && `${planResult.created_projects} project${planResult.created_projects !== 1 ? 's' : ''} created`,
                 planResult.created_tasks > 0 && `${planResult.created_tasks} task${planResult.created_tasks !== 1 ? 's' : ''} added`,
@@ -382,7 +382,7 @@ export default function Today() {
         )}
         <div className="py-2">
           {todayBlocks.length === 0 && (
-            <p className="px-6 pt-4 pb-2 text-xs" style={{ color: '#6b5040' }}>
+            <p className="px-6 pt-4 pb-2 text-xs" style={{ color: '#52525b' }}>
               Drag to block out time — or describe your day above to let Eden plan it.
             </p>
           )}

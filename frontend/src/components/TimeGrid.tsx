@@ -174,7 +174,7 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
               right: 8,
               fontSize: 10,
               fontFamily: 'var(--font-mono)',
-              color: '#6b5040',
+              color: '#3f3f46',
               lineHeight: 1,
             }}
           >
@@ -205,7 +205,7 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
               position: 'absolute',
               top: (h - START_HOUR) * PX_PER_HOUR,
               left: 0, right: 0, height: 1,
-              background: h % 2 === 0 ? '#ccc0a8' : '#c8ba9e',
+              background: h % 2 === 0 ? '#27272a' : '#1f1f22',
               pointerEvents: 'none',
             }}
           />
@@ -219,7 +219,7 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
               position: 'absolute',
               top: (h - START_HOUR) * PX_PER_HOUR + PX_PER_HOUR / 2,
               left: 0, right: 0, height: 1,
-              background: '#c4b898',
+              background: '#18181b',
               pointerEvents: 'none',
             }}
           />
@@ -235,15 +235,15 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
           const height = blockHeightPx(block.start_time, block.end_time)
 
           const bg = isDone
-            ? '#142810'
+            ? '#0d2d1a'
             : isFree
-            ? '#ccbd9e'
+            ? '#18181b'
             : isCompletingThis
-            ? '#bfad90'
-            : '#c4b494'
+            ? '#1c1407'
+            : '#111113'
 
-          const accent = isDone ? '#3a7a4a' : isFree ? '#a89070' : '#7a4820'
-          const textColor = isDone ? '#4a8c5c' : isFree ? '#5a4535' : '#8a6040'
+          const accent = isDone ? '#16a34a' : isFree ? '#3f3f46' : '#b45309'
+          const textColor = isDone ? '#16a34a' : isFree ? '#71717a' : '#a1a1aa'
 
           return (
             <div
@@ -295,8 +295,8 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                     left: 0,
                     marginTop: 4,
                     zIndex: 30,
-                    background: '#d4c4aa',
-                    border: '1px solid #a89070',
+                    background: '#18181b',
+                    border: '1px solid #27272a',
                     borderRadius: 8,
                     padding: '8px 12px',
                     display: 'flex',
@@ -304,42 +304,42 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                     alignItems: 'center',
                     flexWrap: 'wrap',
                     minWidth: 280,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
                   }}
                   onMouseDown={e => e.stopPropagation()}
                 >
-                  <span style={{ fontSize: 11, color: '#6b5040' }}>mins</span>
+                  <span style={{ fontSize: 11, color: '#71717a' }}>mins</span>
                   <input
                     autoFocus
                     value={mins}
                     onChange={e => setMins(e.target.value)}
                     type="number"
-                    style={{ width: 50, fontSize: 11, padding: '3px 6px', background: '#bfad90', border: '1px solid #a89070', borderRadius: 4, color: '#1a1208', outline: 'none' }}
+                    style={{ width: 50, fontSize: 11, padding: '3px 6px', background: '#27272a', border: '1px solid #3f3f46', borderRadius: 4, color: '#f4f4f5', outline: 'none' }}
                   />
-                  <span style={{ fontSize: 11, color: '#6b5040' }}>quality</span>
+                  <span style={{ fontSize: 11, color: '#71717a' }}>quality</span>
                   <input
                     value={quality}
                     onChange={e => setQuality(e.target.value)}
                     type="number" min={1} max={5}
-                    style={{ width: 36, fontSize: 11, padding: '3px 6px', background: '#bfad90', border: '1px solid #a89070', borderRadius: 4, color: '#1a1208', outline: 'none' }}
+                    style={{ width: 36, fontSize: 11, padding: '3px 6px', background: '#27272a', border: '1px solid #3f3f46', borderRadius: 4, color: '#f4f4f5', outline: 'none' }}
                   />
-                  <span style={{ fontSize: 11, color: '#6b5040' }}>energy</span>
+                  <span style={{ fontSize: 11, color: '#71717a' }}>energy</span>
                   <input
                     value={energy}
                     onChange={e => setEnergy(e.target.value)}
                     type="number" min={1} max={5}
-                    style={{ width: 36, fontSize: 11, padding: '3px 6px', background: '#bfad90', border: '1px solid #a89070', borderRadius: 4, color: '#1a1208', outline: 'none' }}
+                    style={{ width: 36, fontSize: 11, padding: '3px 6px', background: '#27272a', border: '1px solid #3f3f46', borderRadius: 4, color: '#f4f4f5', outline: 'none' }}
                   />
                   <button
                     onClick={() => doComplete()}
                     disabled={isCompleting}
-                    style={{ background: isCompleting ? '#a89070' : '#7c3400', color: '#f0e8d8', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, padding: '4px 12px', cursor: 'pointer' }}
+                    style={{ background: isCompleting ? '#3f3f46' : '#7c2d12', color: '#fbbf24', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, padding: '4px 12px', cursor: 'pointer' }}
                   >
                     {isCompleting ? '…' : 'Done'}
                   </button>
                   <button
                     onClick={() => setCompleting(null)}
-                    style={{ fontSize: 11, color: '#6b5040', background: 'none', border: 'none', cursor: 'pointer' }}
+                    style={{ fontSize: 11, color: '#71717a', background: 'none', border: 'none', cursor: 'pointer' }}
                   >
                     Cancel
                   </button>
@@ -361,8 +361,8 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                 top: dragTopPx,
                 height: dragHeightPx,
                 left: 2, right: 2,
-                background: 'rgba(124, 52, 0, 0.12)',
-                border: '1px dashed #7c3400',
+                background: 'rgba(180, 83, 9, 0.1)',
+                border: '1px dashed #b45309',
                 borderRadius: 4,
                 pointerEvents: 'none',
               }}
@@ -372,7 +372,7 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
               top: dragTopPx + 3,
               left: 8,
               fontSize: 9,
-              color: '#7a4820',
+              color: '#b45309',
               fontFamily: 'var(--font-mono)',
               pointerEvents: 'none',
             }}>
@@ -390,15 +390,15 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                 top: pendingTopPx,
                 height: pendingHeightPx,
                 left: 2, right: 2,
-                background: 'rgba(124, 52, 0, 0.22)',
-                border: '1px solid #7c3400',
+                background: 'rgba(180, 83, 9, 0.18)',
+                border: '1px solid #b45309',
                 borderRadius: 4,
                 pointerEvents: 'none',
               }}
             >
               <span style={{
                 fontSize: 9,
-                color: '#8a6040',
+                color: '#fbbf24',
                 fontFamily: 'var(--font-mono)',
                 padding: '2px 5px',
                 display: 'block',
@@ -414,14 +414,14 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                 top: pendingTopPx + pendingHeightPx + 6,
                 left: 2,
                 zIndex: 30,
-                background: '#d4c4aa',
-                border: '1px solid #a89070',
+                background: '#18181b',
+                border: '1px solid #27272a',
                 borderRadius: 8,
                 padding: '8px 12px',
                 display: 'flex',
                 gap: 8,
                 alignItems: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
               }}
               onMouseDown={e => e.stopPropagation()}
             >
@@ -438,23 +438,23 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                   width: 170,
                   fontSize: 12,
                   padding: '3px 8px',
-                  background: '#bfad90',
-                  border: '1px solid #a89070',
+                  background: '#27272a',
+                  border: '1px solid #3f3f46',
                   borderRadius: 6,
-                  color: '#1a1208',
+                  color: '#f4f4f5',
                   outline: 'none',
                 }}
               />
               <button
                 onClick={() => doCreate()}
                 disabled={creating}
-                style={{ background: creating ? '#a89070' : '#7c3400', color: '#f0e8d8', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, padding: '4px 12px', cursor: 'pointer' }}
+                style={{ background: creating ? '#3f3f46' : '#7c2d12', color: '#fbbf24', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, padding: '4px 12px', cursor: 'pointer' }}
               >
                 {creating ? '…' : 'Add'}
               </button>
               <button
                 onClick={() => { setPending(null); setLabel('') }}
-                style={{ fontSize: 11, color: '#6b5040', background: 'none', border: 'none', cursor: 'pointer' }}
+                style={{ fontSize: 11, color: '#71717a', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 Cancel
               </button>
