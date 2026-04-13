@@ -183,11 +183,28 @@ export default function EdenPanel({ collapsed, onToggleCollapse }: EdenPanelProp
       setMessages(m => [...m, streamPlaceholder])
     }
 
+    // Build history for multi-turn context (last 20 messages, exclude the one we just added)
+    const buildHistory = (currentMessages: Message[]) =>
+      currentMessages
+        .slice(-20)
+        .filter(m => m.content)
+        .map(m => ({
+          role: m.role === 'eden' ? 'assistant' : 'user',
+          content: m.content,
+        }))
+
     try {
       const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          history: silent ? [] : buildHistory(
+            // Use functional form to get current state at send time
+            // (messages state may not include the just-pushed user msg yet)
+            messages.filter(m => m.content)
+          ),
+        }),
       })
       if (!res.ok || !res.body) throw new Error()
 
@@ -236,7 +253,7 @@ export default function EdenPanel({ collapsed, onToggleCollapse }: EdenPanelProp
     } finally {
       setLoading(false)
     }
-  }, [voiceEnabled])
+  }, [voiceEnabled, messages])
 
   function handleSend() {
     const text = input.trim()

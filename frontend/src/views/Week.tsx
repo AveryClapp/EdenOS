@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getSchedule } from '../api/schedule'
 import { listTasks } from '../api/tasks'
-import LoadDots from '../components/LoadDots'
 import type { ScheduleBlock, Task } from '../types'
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+
+const LOAD_COLOR: Record<number, string> = { 1: '#316a86', 2: '#5fa8c8', 3: '#00badc' }
 
 function offsetDate(base: Date, days: number): Date {
   const d = new Date(base)
@@ -39,40 +40,84 @@ function DayColumn({
 
   return (
     <div
-      className="flex flex-col min-w-0 flex-1"
       style={{
-        borderRight: '1px solid #27272a',
-        background: isToday ? '#111113' : '#09090b',
+        flex: 1,
+        minWidth: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: '1px solid rgba(0,186,220,0.06)',
+        background: isToday ? 'rgba(0,186,220,0.02)' : 'transparent',
       }}
     >
-      <div
-        className="px-2 py-2 text-xs shrink-0"
-        style={{
-          borderBottom: '1px solid #27272a',
-          color: isToday ? '#fbbf24' : '#52525b',
-        }}
-      >
-        {label} {date.getDate()}
+      {/* Day header */}
+      <div style={{
+        padding: '7px 8px 6px',
+        borderBottom: '1px solid rgba(0,186,220,0.06)',
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 5,
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.1em',
+          color: isToday ? '#00badc' : '#316a86',
+        }}>
+          {label}
+        </span>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 9,
+          color: isToday ? 'rgba(0,186,220,0.6)' : '#1e4d6b',
+        }}>
+          {date.getDate()}
+        </span>
+        {isToday && (
+          <span style={{ marginLeft: 'auto', width: 4, height: 4, borderRadius: '50%', background: '#00badc', display: 'inline-block', boxShadow: '0 0 6px rgba(0,186,220,0.7)', flexShrink: 0 }} />
+        )}
       </div>
-      <div className="flex-1 overflow-y-auto">
+
+      {/* Blocks */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {blocks.length === 0 ? (
-          <div className="px-2 py-3 text-xs" style={{ color: '#3f3f46' }}>—</div>
+          <div style={{ padding: '8px', fontFamily: 'var(--font-mono)', fontSize: 9, color: '#1e4d6b', letterSpacing: '0.08em' }}>—</div>
         ) : (
-          blocks.map((block) => {
+          blocks.map(block => {
             const task = block.task_id ? taskMap[block.task_id] : null
+            const isDone = task?.status === 'done'
+            const load = task?.cognitive_load ?? 1
+            const accent = isDone ? 'rgba(0,204,106,0.4)' : LOAD_COLOR[load] ?? '#316a86'
+
             return (
               <div
                 key={block.id}
-                className="px-2 py-1.5 text-xs transition-colors"
-                style={{ borderBottom: '1px solid #18181b' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#18181b')}
-                onMouseLeave={e => (e.currentTarget.style.background = '')}
+                style={{
+                  padding: '5px 8px',
+                  borderBottom: '1px solid rgba(0,186,220,0.04)',
+                  borderLeft: `2px solid ${accent}`,
+                  marginBottom: 1,
+                  opacity: isDone ? 0.5 : 1,
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,186,220,0.03)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <div className="mb-0.5" style={{ color: '#52525b' }}>{block.start_time.slice(0, 5)}</div>
-                <div className="truncate" style={{ color: task?.status === 'done' ? '#52525b' : '#e4e4e7', textDecoration: task?.status === 'done' ? 'line-through' : 'none' }}>
-                  {task ? task.title : block.calendar_event_id ? 'external' : 'blocked'}
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#1e4d6b', marginBottom: 2 }}>
+                  {block.start_time.slice(0, 5)}
                 </div>
-                {task && <LoadDots level={task.cognitive_load} />}
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 300,
+                  color: isDone ? '#316a86' : '#9dd4ea',
+                  textDecoration: isDone ? 'line-through' : 'none',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  lineHeight: 1.3,
+                }}>
+                  {task ? task.title : block.calendar_event_id ? 'EXTERNAL' : 'BLOCKED'}
+                </div>
               </div>
             )
           })
@@ -103,52 +148,65 @@ export default function Week() {
     queryFn: () => listTasks(),
   })
 
-  const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]))
+  const taskMap = Object.fromEntries(tasks.map(t => [t.id, t]))
   const weekDates = Array.from({ length: 7 }, (_, i) => offsetDate(startDate, i))
+  const totalBlocks = (schedule?.week ?? []).length
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-3 shrink-0" style={{ borderBottom: '1px solid #27272a' }}>
-        <span className="section-head">Week</span>
-        <div className="flex items-center gap-3 text-xs">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '14px 20px 10px', borderBottom: '1px solid rgba(0,186,220,0.08)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 300, fontSize: 26, letterSpacing: '0.08em', color: '#cde8f5', margin: 0 }}>
+            WEEK
+          </h1>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>
+            {weekOffset === 0 ? 'CURRENT' : formatRange(startDate, endDate)} · {totalBlocks} BLOCKS
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
-            onClick={() => setWeekOffset((n) => n - 1)}
-            className="transition-colors"
-            style={{ color: '#52525b' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#52525b')}
+            onClick={() => setWeekOffset(n => n - 1)}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
           >
-            ‹ prev
+            ‹
           </button>
-          <span className="w-32 text-center" style={{ color: '#52525b' }}>
-            {weekOffset === 0 ? 'this week' : formatRange(startDate, endDate)}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em', minWidth: 80, textAlign: 'center' }}>
+            {weekOffset === 0 ? 'THIS WEEK' : weekOffset > 0 ? `+${weekOffset}W` : `${weekOffset}W`}
           </span>
           <button
-            onClick={() => setWeekOffset((n) => n + 1)}
-            className="transition-colors"
-            style={{ color: '#52525b' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#52525b')}
+            onClick={() => setWeekOffset(n => n + 1)}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
           >
-            next ›
+            ›
           </button>
           {weekOffset !== 0 && (
             <button
               onClick={() => setWeekOffset(0)}
-              className="transition-colors"
-              style={{ color: '#71717a' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#71717a')}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', color: 'rgba(0,186,220,0.5)', background: 'none', border: '1px solid rgba(0,186,220,0.15)', borderRadius: 2, padding: '2px 7px', cursor: 'pointer' }}
             >
-              today
+              TODAY
             </button>
           )}
         </div>
       </div>
-      <div className="flex flex-1 overflow-hidden">
-        {weekDates.map((date) => {
+
+      {/* Load legend */}
+      <div style={{ display: 'flex', gap: 16, padding: '6px 20px', borderBottom: '1px solid rgba(0,186,220,0.05)', flexShrink: 0 }}>
+        {[['1', 'LIGHT', '#316a86'], ['2', 'MODERATE', '#5fa8c8'], ['3', 'DEEP FOCUS', '#00badc']].map(([l, label, c]) => (
+          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 2, height: 10, background: c as string, borderRadius: 1 }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#316a86', letterSpacing: '0.1em' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {weekDates.map(date => {
           const ds = isoDate(date)
-          const dayBlocks = (schedule?.week ?? []).filter((b) => b.date === ds)
+          const dayBlocks = (schedule?.week ?? []).filter(b => b.date === ds)
           return (
             <DayColumn
               key={ds}

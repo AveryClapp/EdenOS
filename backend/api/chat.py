@@ -161,9 +161,11 @@ def chat_stream(
     SSE endpoint that streams Eden's response token by token.
     Emits: data: {"delta": "..."}\n\n  then  data: {"done": true}\n\n
     """
+    history = [{"role": h.role, "content": h.content} for h in body.history]
+
     def generate():
         try:
-            for chunk in eden.chat_stream(body.message, db):
+            for chunk in eden.chat_stream(body.message, db, history=history):
                 yield f"data: {json.dumps({'delta': chunk})}\n\n"
         except Exception as exc:
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"

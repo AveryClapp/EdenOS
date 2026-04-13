@@ -9,7 +9,7 @@ import TimeGrid from '../components/TimeGrid'
 import type { Task, PlanDayResult, ScheduleExplanation } from '../types'
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+  return d.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()
 }
 
 function todayStr(): string {
@@ -21,6 +21,30 @@ function formatElapsed(secs: number): string {
   const m = Math.floor(secs / 60)
   const s = secs % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const BTN_PRIMARY: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.1em',
+  color: '#00badc',
+  background: 'rgba(0,186,220,0.08)',
+  border: '1px solid rgba(0,186,220,0.25)',
+  borderRadius: 2,
+  padding: '4px 10px',
+  cursor: 'pointer',
+  transition: 'all 0.15s',
+}
+
+const BTN_GHOST: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: 10,
+  letterSpacing: '0.08em',
+  color: '#316a86',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: '4px 6px',
 }
 
 function CompleteForm({
@@ -53,46 +77,31 @@ function CompleteForm({
     onError: (e: Error) => setError(e.message),
   })
 
+  const fieldStyle: React.CSSProperties = {
+    width: 44,
+    fontSize: 11,
+    fontFamily: 'var(--font-mono)',
+    padding: '3px 6px',
+    background: 'rgba(0,186,220,0.04)',
+    border: '1px solid rgba(0,186,220,0.12)',
+    borderRadius: 2,
+    color: '#9dd4ea',
+    outline: 'none',
+  }
+
   return (
-    <div className="pl-20 pr-6 py-2.5 flex items-center gap-3 text-xs border-b" style={{ background: '#111113', borderColor: '#27272a' }}>
-      <span style={{ color: '#71717a' }}>mins</span>
-      <input
-        className="w-14 text-xs px-2 py-1 border"
-        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
-        value={mins}
-        onChange={(e) => setMins(e.target.value)}
-      />
-      <span style={{ color: '#71717a' }}>quality</span>
-      <input
-        className="w-10 text-xs px-2 py-1 border"
-        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
-        value={quality}
-        onChange={(e) => setQuality(e.target.value)}
-        type="number" min={1} max={5}
-      />
-      <span style={{ color: '#71717a' }}>energy</span>
-      <input
-        className="w-10 text-xs px-2 py-1 border"
-        style={{ background: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '6px' }}
-        value={energy}
-        onChange={(e) => setEnergy(e.target.value)}
-        type="number" min={1} max={5}
-      />
-      <button
-        onClick={() => mutate()}
-        disabled={isPending}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-        style={{ background: isPending ? '#3f3f46' : '#7c2d12', color: isPending ? '#71717a' : '#fbbf24' }}
-      >
-        {isPending ? '…' : 'Done'}
+    <div style={{ padding: '8px 20px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(0,186,220,0.06)', background: 'rgba(0,186,220,0.02)' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>MINS</span>
+      <input style={fieldStyle} value={mins} onChange={e => setMins(e.target.value)} />
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>QUALITY</span>
+      <input style={{ ...fieldStyle, width: 36 }} value={quality} onChange={e => setQuality(e.target.value)} type="number" min={1} max={5} />
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>ENERGY</span>
+      <input style={{ ...fieldStyle, width: 36 }} value={energy} onChange={e => setEnergy(e.target.value)} type="number" min={1} max={5} />
+      <button onClick={() => mutate()} disabled={isPending} style={{ ...BTN_PRIMARY, opacity: isPending ? 0.5 : 1 }}>
+        {isPending ? '···' : 'DONE'}
       </button>
-      <button onClick={onDone} className="text-xs transition-colors" style={{ color: '#71717a' }}
-        onMouseEnter={e => (e.currentTarget.style.color = '#a1a1aa')}
-        onMouseLeave={e => (e.currentTarget.style.color = '#71717a')}
-      >
-        Cancel
-      </button>
-      {error && <span className="text-red-500 text-xs ml-2">{error}</span>}
+      <button onClick={onDone} style={BTN_GHOST}>CANCEL</button>
+      {error && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#ff3535' }}>{error}</span>}
     </div>
   )
 }
@@ -119,53 +128,42 @@ function NowStrip() {
 
   const now = Date.now()
   const isSnoozed = snoozedUntil !== null && now < snoozedUntil
+  if (isLoading || isSnoozed || !data?.task) return null
 
-  if (isLoading || isSnoozed) return null
-  if (!data?.task) return null
-
-  const handleOnIt = () => {
-    setTimerStart(Date.now())
-    setElapsed(0)
-  }
-
-  const handleSkip = () => {
-    setSkips(s => s + 1)
-    setTimerStart(null)
-    qc.invalidateQueries({ queryKey: ['now'] })
-  }
-
-  const handleNotNow = () => {
-    setTimerStart(null)
-    setSnoozedUntil(Date.now() + 20 * 60 * 1000)
-  }
-
+  const handleOnIt = () => { setTimerStart(Date.now()); setElapsed(0) }
+  const handleSkip = () => { setSkips(s => s + 1); setTimerStart(null); qc.invalidateQueries({ queryKey: ['now'] }) }
+  const handleNotNow = () => { setTimerStart(null); setSnoozedUntil(Date.now() + 20 * 60 * 1000) }
   const elapsedMins = Math.max(1, Math.ceil(elapsed / 60))
+
+  const stripStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    padding: '8px 20px',
+    borderBottom: '1px solid rgba(0,186,220,0.08)',
+    background: 'rgba(0,186,220,0.03)',
+    borderLeft: '2px solid rgba(0,186,220,0.5)',
+  }
 
   if (timerStart) {
     return (
-      <div className="border-b" style={{ borderColor: '#27272a' }}>
-        <div className="px-6 py-3 flex items-center gap-4 text-xs" style={{ background: '#111113' }}>
-          <button
-            onClick={() => setShowLog(true)}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-            style={{ background: '#7c2d12', color: '#fbbf24' }}
-          >
-            Stop &amp; log
-          </button>
-          <span className="flex-1 truncate" style={{ color: '#e4e4e7' }}>{data.task.title}</span>
-          <span className="font-mono shrink-0" style={{ color: '#fbbf24' }}>{formatElapsed(elapsed)}</span>
-          <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>
-            Abandon
-          </button>
+      <div>
+        <div style={stripStyle}>
+          <button onClick={() => setShowLog(true)} style={BTN_PRIMARY}>STOP</button>
+          <span style={{ flex: 1, fontSize: 12, fontWeight: 300, color: '#9dd4ea', fontFamily: 'var(--font-sans)' }} className="truncate">
+            {data.task.title}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#00badc', flexShrink: 0 }}>
+            {formatElapsed(elapsed)}
+          </span>
+          <button onClick={handleSkip} style={BTN_GHOST}>ABANDON</button>
         </div>
         {showLog && (
           <CompleteForm
             task={data.task as Task}
             defaultMins={elapsedMins}
             onDone={() => {
-              setTimerStart(null)
-              setElapsed(0)
-              setShowLog(false)
+              setTimerStart(null); setElapsed(0); setShowLog(false)
               qc.invalidateQueries({ queryKey: ['now'] })
               qc.invalidateQueries({ queryKey: ['tasks'] })
               qc.invalidateQueries({ queryKey: ['schedule'] })
@@ -177,24 +175,17 @@ function NowStrip() {
   }
 
   return (
-    <div className="px-6 py-3 flex items-center gap-4 text-xs border-b" style={{ background: '#111113', borderColor: '#27272a' }}>
-      <button
-        onClick={handleOnIt}
-        className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-        style={{ background: '#7c2d12', color: '#fbbf24' }}
-      >
-        On it
-      </button>
-      <span className="flex-1 truncate">
-        <span style={{ color: '#e4e4e7' }}>{data.task.title}</span>
-        {' '}—{' '}
-        <span style={{ color: '#71717a' }}>{data.reason}</span>
+    <div style={stripStyle}>
+      <button onClick={handleOnIt} style={BTN_PRIMARY}>ON IT</button>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ fontSize: 12, fontWeight: 300, color: '#9dd4ea' }}>{data.task.title}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86' }}>{' '}—{' '}{data.reason}</span>
       </span>
-      <button onClick={handleSkip} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>Skip</button>
-      <button onClick={handleNotNow} className="text-xs shrink-0 transition-colors" style={{ color: '#71717a' }}>Not now</button>
+      <button onClick={handleSkip} style={BTN_GHOST}>SKIP</button>
+      <button onClick={handleNotNow} style={BTN_GHOST}>NOT NOW</button>
       {skips >= 3 && (
-        <span className="text-xs shrink-0" style={{ color: '#d97706' }}>
-          Day drifting — <a href="/plan" className="underline">replan?</a>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#ffb300', letterSpacing: '0.08em' }}>
+          DAY DRIFTING
         </span>
       )}
     </div>
@@ -207,18 +198,18 @@ function ProposalsStrip({ proposals, onAdd }: {
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ borderBottom: '1px solid #27272a' }}>
-      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 24px', background: 'none', border: 'none', cursor: 'pointer' }}>
-        <span style={{ fontSize: 10, color: '#52525b' }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, color: '#52525b' }}>Suggested tasks ({proposals.length})</span>
+    <div style={{ borderBottom: '1px solid rgba(0,186,220,0.06)' }}>
+      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 20px', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>SUGGESTED TASKS ({proposals.length})</span>
       </button>
       {open && (
-        <div style={{ padding: '0 24px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ padding: '0 20px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
           {proposals.map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-              <span style={{ color: '#e4e4e7', flex: 1 }}>{p.title}</span>
-              <span style={{ color: '#71717a' }}>{p.estimated_minutes}m</span>
-              <button onClick={() => onAdd(p)} style={{ fontSize: 11, color: '#fbbf24', background: 'none', border: '1px solid #27272a', borderRadius: 6, padding: '2px 8px', cursor: 'pointer' }}>Add</button>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 300, color: '#9dd4ea' }}>{p.title}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86' }}>{p.estimated_minutes}m</span>
+              <button onClick={() => onAdd(p)} style={BTN_PRIMARY}>ADD</button>
             </div>
           ))}
         </div>
@@ -230,26 +221,13 @@ function ProposalsStrip({ proposals, onAdd }: {
 function WhyStrip({ explanation }: { explanation: ScheduleExplanation }) {
   const [open, setOpen] = useState(false)
   return (
-    <div style={{ borderBottom: '1px solid #27272a' }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 24px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
-      >
-        <span style={{ fontSize: 10, color: '#52525b' }}>{open ? '▾' : '▸'}</span>
-        <span style={{ fontSize: 11, color: '#52525b' }}>Why this schedule?</span>
+    <div style={{ borderBottom: '1px solid rgba(0,186,220,0.06)' }}>
+      <button onClick={() => setOpen(v => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '7px 20px', background: 'none', border: 'none', cursor: 'pointer' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>{open ? '▾' : '▸'}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>WHY THIS SCHEDULE</span>
       </button>
       {open && (
-        <div style={{ padding: '0 24px 12px', fontSize: 12, color: '#71717a', lineHeight: 1.6 }}>
+        <div style={{ padding: '0 20px 10px', fontSize: 12, fontWeight: 300, color: '#5fa8c8', lineHeight: 1.6 }}>
           {explanation.summary}
         </div>
       )}
@@ -295,7 +273,7 @@ export default function Today() {
     },
   })
 
-  const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]))
+  const taskMap = Object.fromEntries(tasks.map(t => [t.id, t]))
 
   const { mutate: runSched, isPending: running } = useMutation({
     mutationFn: runScheduler,
@@ -316,53 +294,52 @@ export default function Today() {
   const todayBlocks = schedule?.today ?? []
 
   return (
-    <div className="flex flex-col h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <NowStrip />
 
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b shrink-0" style={{ borderColor: '#27272a' }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: 300, color: '#f4f4f5', letterSpacing: '-0.02em' }}>
-          {formatDate(new Date())}
-        </span>
-        <button
-          onClick={() => runSched()}
-          disabled={running}
-          className="text-xs transition-colors"
-          style={{ color: running ? '#3f3f46' : '#52525b' }}
-        >
-          {running ? 'Running…' : 'Re-run scheduler'}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', padding: '14px 20px 10px', borderBottom: '1px solid rgba(0,186,220,0.08)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 300, fontSize: 26, letterSpacing: '0.08em', color: '#cde8f5', margin: 0 }}>
+            {formatDate(new Date())}
+          </h1>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>
+            {todayBlocks.length} BLOCKS
+          </span>
+        </div>
+        <button onClick={() => runSched()} disabled={running} style={{ ...BTN_GHOST, opacity: running ? 0.5 : 1, letterSpacing: '0.08em' }}>
+          {running ? 'RUNNING···' : 'RE-RUN SCHEDULER'}
         </button>
       </div>
 
       {/* Intent input */}
-      <div className="px-6 py-3 border-b shrink-0" style={{ borderColor: '#27272a' }}>
-        <div className="flex items-center gap-3">
+      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(0,186,220,0.06)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,186,220,0.03)', border: '1px solid rgba(0,186,220,0.1)', borderRadius: 2, padding: '7px 10px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(0,186,220,0.35)', flexShrink: 0 }}>&gt;</span>
           <input
-            className="flex-1 text-sm outline-none placeholder:opacity-40 bg-transparent"
-            style={{ color: '#e4e4e7' }}
+            style={{ flex: 1, background: 'transparent', outline: 'none', border: 'none', fontSize: 12, fontWeight: 300, color: '#9dd4ea', caretColor: '#00badc', fontFamily: 'var(--font-sans)' }}
             placeholder="What do you want to work on today?"
             value={intent}
-            onChange={(e) => setIntent(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && intent.trim() && !planning) plan() }}
+            onChange={e => setIntent(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && intent.trim() && !planning) plan() }}
             disabled={planning}
           />
           <button
             onClick={() => plan()}
             disabled={planning || !intent.trim()}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0"
-            style={{ background: planning || !intent.trim() ? '#27272a' : '#7c2d12', color: planning || !intent.trim() ? '#52525b' : '#fbbf24' }}
+            style={{ ...BTN_PRIMARY, opacity: planning || !intent.trim() ? 0.4 : 1 }}
           >
-            {planning ? 'Planning…' : 'Plan'}
+            {planning ? 'PLANNING···' : 'PLAN'}
           </button>
         </div>
         {planResult && (
-          <div className="mt-2 space-y-0.5">
-            <p className="text-xs" style={{ color: '#71717a' }}>{planResult.summary}</p>
-            <p className="text-xs" style={{ color: '#52525b' }}>
+          <div style={{ marginTop: 6 }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 300, color: '#5fa8c8', margin: '0 0 2px' }}>{planResult.summary}</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.08em', margin: 0 }}>
               {[
-                planResult.created_projects > 0 && `${planResult.created_projects} project${planResult.created_projects !== 1 ? 's' : ''} created`,
-                planResult.created_tasks > 0 && `${planResult.created_tasks} task${planResult.created_tasks !== 1 ? 's' : ''} added`,
-                `${planResult.blocks_created} block${planResult.blocks_created !== 1 ? 's' : ''} scheduled`,
+                planResult.created_projects > 0 && `${planResult.created_projects} PROJECT${planResult.created_projects !== 1 ? 'S' : ''} CREATED`,
+                planResult.created_tasks > 0 && `${planResult.created_tasks} TASK${planResult.created_tasks !== 1 ? 'S' : ''} ADDED`,
+                `${planResult.blocks_created} BLOCK${planResult.blocks_created !== 1 ? 'S' : ''} SCHEDULED`,
               ].filter(Boolean).join(' · ')}
             </p>
           </div>
@@ -373,24 +350,18 @@ export default function Today() {
       <AlertStrip />
 
       {/* Time grid */}
-      <div className="flex-1 overflow-y-auto">
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {(proposals?.proposals?.length ?? 0) > 0 && (
           <ProposalsStrip proposals={proposals!.proposals} onAdd={addProposal} />
         )}
-        {explanation?.summary && (
-          <WhyStrip explanation={explanation} />
-        )}
-        <div className="py-2">
+        {explanation?.summary && <WhyStrip explanation={explanation} />}
+        <div style={{ paddingTop: 4 }}>
           {todayBlocks.length === 0 && (
-            <p className="px-6 pt-4 pb-2 text-xs" style={{ color: '#52525b' }}>
-              Drag to block out time — or describe your day above to let Eden plan it.
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#1e4d6b', letterSpacing: '0.1em', padding: '14px 20px' }}>
+              NO BLOCKS SCHEDULED — DESCRIBE YOUR DAY ABOVE TO LET EDEN PLAN IT
             </p>
           )}
-          <TimeGrid
-            blocks={todayBlocks}
-            taskMap={taskMap}
-            date={todayStr()}
-          />
+          <TimeGrid blocks={todayBlocks} taskMap={taskMap} date={todayStr()} />
         </div>
       </div>
     </div>

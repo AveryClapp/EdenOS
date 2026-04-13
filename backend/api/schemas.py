@@ -185,10 +185,16 @@ class PlanDayResponse(BaseModel):
 
 # --- Chat ---
 
+class ChatHistoryEntry(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
     mode: Literal["chat", "planning"] = "chat"
     planning_date: date | None = None
+    history: list[ChatHistoryEntry] = []
 
 
 class ProposedAction(BaseModel):

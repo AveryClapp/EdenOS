@@ -23,26 +23,32 @@ class EdenClient:
 
     SESSION_OPEN_TOKEN = "__session_open__"
 
-    def chat_stream(self, user_message: str, db: Session, now=None):
+    def chat_stream(self, user_message: str, db: Session, now=None, history: list[dict] | None = None):
         """
         Generator that yields plain-text chunks from the LLM.
         Text-only — no tool use. Use chat() when tools are needed.
         Uses STREAM_SYSTEM_PROMPT which has no JSON format requirement.
+        history: list of {"role": "user"|"assistant", "content": str} from prior turns.
         """
         snapshot = build_context_snapshot(db, now=now)
 
         if user_message == self.SESSION_OPEN_TOKEN:
             system = STREAM_SYSTEM_PROMPT + "\n\n" + SESSION_OPEN_PROMPT
-            prompt = format_chat_prompt("Open a new session. Greet the user based on the temporal context.", snapshot)
+            final_prompt = format_chat_prompt("Open a new session. Greet the user based on the temporal context.", snapshot)
+            messages = [{"role": "user", "content": final_prompt}]
         else:
             system = STREAM_SYSTEM_PROMPT
-            prompt = format_chat_prompt(user_message, snapshot)
+            # Build multi-turn messages: history first (plain), then fresh context in final turn
+            messages = []
+            for h in (history or []):
+                messages.append({"role": h["role"], "content": h["content"]})
+            messages.append({"role": "user", "content": format_chat_prompt(user_message, snapshot)})
 
         with self._client.messages.stream(
             model=settings.llm_model,
             max_tokens=2048,
             system=system,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
         ) as stream:
             for text in stream.text_stream:
                 yield text
