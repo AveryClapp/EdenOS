@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 interface Task {
   id: string
@@ -265,17 +266,17 @@ function RecoveryArc({ score, rec }: { score: number; rec: string }) {
 
 // ─── Main CommandCenter ───────────────────────────────────────────────────────
 
-export default function CommandCenter() {
-  const [ctx, setCtx] = useState<ContextSnapshot | null>(null)
-  const [error, setError] = useState(false)
-  const [clock, setClock] = useState('')
+const fetchContext = (): Promise<ContextSnapshot> =>
+  fetch('/api/context').then(r => { if (!r.ok) throw new Error(); return r.json() })
 
-  useEffect(() => {
-    fetch('/api/context')
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
-      .then(setCtx)
-      .catch(() => setError(true))
-  }, [])
+export default function CommandCenter() {
+  const [clock, setClock] = useState('')
+  const { data: ctx, isError } = useQuery<ContextSnapshot>({
+    queryKey: ['context'],
+    queryFn: fetchContext,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  })
 
   useEffect(() => {
     const tick = () => setClock(new Date().toLocaleTimeString([], {
@@ -286,7 +287,7 @@ export default function CommandCenter() {
     return () => clearInterval(id)
   }, [])
 
-  if (error) return (
+  if (isError) return (
     <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#163d55', letterSpacing: '0.1em' }}>
       CONNECTION LOST · RETRYING...
     </div>

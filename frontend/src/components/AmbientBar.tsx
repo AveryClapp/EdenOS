@@ -1,58 +1,47 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
-interface AmbientState {
-  time: string
-  date: string
-  recovery: number | null
-  recoveryRec: 'green' | 'yellow' | 'red' | null
-  alertCount: number
+interface ContextSlice {
+  whoop_today: { recovery_score: number; recommendation: 'green' | 'yellow' | 'red' } | null
+  alerts: { severity: string }[]
 }
+
+const fetchContext = (): Promise<ContextSlice> =>
+  fetch('/api/context').then(r => { if (!r.ok) throw new Error(); return r.json() })
 
 const DOT = <span style={{ color: 'rgba(0,186,220,0.2)', margin: '0 6px', fontSize: 8 }}>◆</span>
 
 export default function AmbientBar() {
-  const [state, setState] = useState<AmbientState>({
-    time: '',
-    date: '',
-    recovery: null,
-    recoveryRec: null,
-    alertCount: 0,
-  })
+  const [time, setTime] = useState('')
+  const [date, setDate] = useState('')
 
-  // Clock — tick every second
+  // Clock — 1s tick, no backend needed
   useEffect(() => {
     const tick = () => {
       const now = new Date()
-      setState(s => ({
-        ...s,
-        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        date: now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase(),
-      }))
+      setTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+      setDate(now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase())
     }
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [])
 
-  // Fetch WHOOP + alerts once on mount
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/whoop/today').then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch('/api/chat/alerts').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([whoop, alerts]) => {
-      setState(s => ({
-        ...s,
-        recovery: whoop?.recovery_score ?? null,
-        recoveryRec: whoop?.recommendation ?? null,
-        alertCount: Array.isArray(alerts) ? alerts.length : 0,
-      }))
-    })
-  }, [])
+  // Shares the same cache as CommandCenter — zero extra requests
+  const { data } = useQuery<ContextSlice>({
+    queryKey: ['context'],
+    queryFn: fetchContext,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  })
+
+  const whoop = data?.whoop_today ?? null
+  const alertCount = data?.alerts?.length ?? 0
 
   const recoveryColor =
-    state.recoveryRec === 'green'  ? '#00cc6a'
-    : state.recoveryRec === 'yellow' ? '#ffb300'
-    : state.recoveryRec === 'red'    ? '#ff3535'
+    whoop?.recommendation === 'green'  ? '#00cc6a'
+    : whoop?.recommendation === 'yellow' ? '#ffb300'
+    : whoop?.recommendation === 'red'    ? '#ff3535'
     : 'rgba(0,186,220,0.3)'
 
   return (
@@ -75,7 +64,7 @@ export default function AmbientBar() {
       }}
     >
       {/* Left — system ID */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <span style={{
           color: 'rgba(0,186,220,0.4)',
           letterSpacing: '0.18em',
@@ -88,7 +77,6 @@ export default function AmbientBar() {
         {DOT}
         <span style={{ color: '#316a86' }}>v1.0</span>
         {DOT}
-        {/* Heartbeat indicator */}
         <span style={{
           display: 'inline-block',
           width: 5, height: 5,
@@ -100,45 +88,46 @@ export default function AmbientBar() {
         <span style={{ color: '#163d55', fontSize: 9 }}>ONLINE</span>
       </div>
 
-      {/* Center — time + date */}
-      <div style={{ display: 'flex', alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+      {/* Center — live clock */}
+      <div style={{
+        position: 'absolute',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+      }}>
         <span style={{
           color: '#00badc',
           letterSpacing: '0.12em',
           fontSize: 11,
           textShadow: '0 0 12px rgba(0,186,220,0.4)',
         }}>
-          {state.time}
+          {time}
         </span>
         {DOT}
-        <span style={{ color: '#316a86', letterSpacing: '0.1em' }}>
-          {state.date}
-        </span>
+        <span style={{ color: '#316a86', letterSpacing: '0.1em' }}>{date}</span>
       </div>
 
       {/* Right — biometrics + alerts */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-        {state.recovery != null && (
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        {whoop != null && (
           <>
             <span style={{ color: '#163d55', fontSize: 9, letterSpacing: '0.12em' }}>RECOVERY</span>
             <span style={{ color: recoveryColor, marginLeft: 4, fontSize: 10 }}>
-              {state.recovery}%
+              {whoop.recovery_score}%
             </span>
             {DOT}
           </>
         )}
-        {state.alertCount > 0 && (
+        {alertCount > 0 && (
           <>
             <span style={{ color: '#ffb300' }}>
-              {state.alertCount} ALERT{state.alertCount !== 1 ? 'S' : ''}
+              {alertCount} ALERT{alertCount !== 1 ? 'S' : ''}
             </span>
             {DOT}
           </>
         )}
-        {/* Right-edge bracket */}
-        <span style={{ color: 'rgba(0,186,220,0.2)', fontSize: 9, marginLeft: 2 }}>
-          ◢
-        </span>
+        <span style={{ color: 'rgba(0,186,220,0.2)', fontSize: 9, marginLeft: 2 }}>◢</span>
       </div>
     </div>
   )
