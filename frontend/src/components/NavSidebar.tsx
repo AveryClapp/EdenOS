@@ -38,25 +38,13 @@ export default function NavSidebar() {
       }} />
 
       {/* Brand mark */}
-      <div
-        style={{
-          width: 28, height: 28,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 14,
-          flexShrink: 0,
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          fontSize: 15,
-          letterSpacing: '0.05em',
-          color: '#00badc',
-          border: '1px solid rgba(0,186,220,0.25)',
-          borderRadius: 2,
-        }}
-      >
-        E
-      </div>
+      <img
+        src="/favicon.svg"
+        alt="Eden"
+        width={28}
+        height={28}
+        style={{ marginBottom: 14, flexShrink: 0, borderRadius: 2 }}
+      />
 
       {/* Divider */}
       <div style={{
