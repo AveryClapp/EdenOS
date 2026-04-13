@@ -22,7 +22,7 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
     Never call the LLM without this snapshot.
     """
     if now is None:
-        now = datetime.utcnow()
+        now = datetime.now()  # local time — temporal context must reflect the user's timezone
 
     return {
         "goals": _build_goals(db),

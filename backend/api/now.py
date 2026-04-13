@@ -50,7 +50,7 @@ def _score_task(task: Task, energy: int, defer_counts: dict) -> float:
 
 @router.get("")
 def get_now_suggestion(db: Session = Depends(get_db)):
-    now = datetime.utcnow()
+    now = datetime.now()  # local time
     today = date.today()
     now_time = now.time()
 
