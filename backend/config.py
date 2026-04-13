@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    database_url: str = "sqlite:///eden.db"
+    database_url: str = "postgresql://eden:eden@localhost:5432/eden"
     scheduler_interval_seconds: int = 1800
     sync_interval_seconds: int = 600
     llm_model: str = "claude-opus-4-6"
