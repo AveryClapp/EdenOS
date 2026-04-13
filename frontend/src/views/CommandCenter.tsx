@@ -84,7 +84,7 @@ function HudPanel({
     ok: '#00cc6a',
     warn: '#ffb300',
     danger: '#ff3535',
-    idle: '#163d55',
+    idle: '#316a86',
   }[indicator ?? 'idle']
 
   return (
@@ -143,7 +143,7 @@ function TaskRow({ task, index }: { task: Task; index: number }) {
     <div
       className="fade-up"
       style={{
-        animationDelay: `${0.25 + index * 0.04}s`,
+        animationDelay: `${index * 0.03}s`,
         paddingBottom: 7,
         borderBottom: '1px solid rgba(0,186,220,0.04)',
         marginBottom: 7,
@@ -288,13 +288,13 @@ export default function CommandCenter() {
   }, [])
 
   if (isError) return (
-    <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#163d55', letterSpacing: '0.1em' }}>
+    <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.1em' }}>
       CONNECTION LOST · RETRYING...
     </div>
   )
 
   if (!ctx) return (
-    <div style={{ padding: 32, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#163d55', letterSpacing: '0.1em' }}>
+    <div style={{ padding: 32, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.1em' }}>
       <span style={{ animation: 'pulse-dot 1s infinite', color: '#00badc' }}>◆</span>
       INITIALIZING...
     </div>
@@ -347,7 +347,7 @@ export default function CommandCenter() {
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize: 10,
-            color: '#163d55',
+            color: '#316a86',
             letterSpacing: '0.12em',
             marginTop: 5,
           }}>
@@ -375,7 +375,7 @@ export default function CommandCenter() {
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize: 9,
-            color: '#163d55',
+            color: '#316a86',
             letterSpacing: '0.16em',
             marginTop: 4,
           }}>
@@ -404,7 +404,7 @@ export default function CommandCenter() {
           style={{ gridRow: '1 / 3' }}
         >
           {priorityTasks.length === 0 ? (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#163d55', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.08em' }}>
               NO ACTIVE ITEMS
             </p>
           ) : (
@@ -417,7 +417,7 @@ export default function CommandCenter() {
                 <div style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: 9,
-                  color: '#163d55',
+                  color: '#316a86',
                   letterSpacing: '0.1em',
                   marginTop: 4,
                 }}>
@@ -440,7 +440,7 @@ export default function CommandCenter() {
           delay={0.14}
         >
           {alerts.length === 0 ? (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#163d55', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86', letterSpacing: '0.08em' }}>
               NOMINAL · NO FLAGS
             </p>
           ) : (
@@ -449,7 +449,7 @@ export default function CommandCenter() {
                 <div
                   key={i}
                   className="fade-up"
-                  style={{ animationDelay: `${0.3 + i * 0.05}s`, display: 'flex', gap: 7, alignItems: 'flex-start' }}
+                  style={{ animationDelay: `${i * 0.04}s`, display: 'flex', gap: 7, alignItems: 'flex-start' }}
                 >
                   <span style={{
                     fontFamily: 'var(--font-mono)',
@@ -487,7 +487,7 @@ export default function CommandCenter() {
                 <div style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: 9,
-                  color: '#163d55',
+                  color: '#316a86',
                   letterSpacing: '0.12em',
                   marginBottom: 5,
                 }}>
@@ -511,7 +511,7 @@ export default function CommandCenter() {
               </div>
             </div>
           ) : (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#163d55', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86', letterSpacing: '0.08em' }}>
               NO BIOMETRIC LINK
             </p>
           )}
@@ -528,9 +528,9 @@ export default function CommandCenter() {
               { label: 'DUE SOON', value: tasks.due_soon.length,  cap: 8,  color: '#ffb300' },
               { label: 'ACTIVE',   value: tasks.active.length,    cap: 12, color: '#00badc' },
               { label: 'BACKLOG',  value: tasks.backlog.length,   cap: 40, color: '#316a86' },
-              { label: 'DEFERRED', value: tasks.deferred.length,  cap: 10, color: '#163d55' },
+              { label: 'DEFERRED', value: tasks.deferred.length,  cap: 10, color: '#316a86' },
             ].map(({ label, value, cap, color }, i) => (
-              <div key={label} className="fade-up" style={{ animationDelay: `${0.35 + i * 0.04}s` }}>
+              <div key={label} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -540,7 +540,7 @@ export default function CommandCenter() {
                   <span style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: 9,
-                    color: '#163d55',
+                    color: '#316a86',
                     letterSpacing: '0.1em',
                   }}>
                     {label}
@@ -569,7 +569,7 @@ export default function CommandCenter() {
           <div style={{
             fontFamily: 'var(--font-mono)',
             fontSize: 9,
-            color: '#163d55',
+            color: '#316a86',
             letterSpacing: '0.12em',
             lineHeight: 2,
           }}>

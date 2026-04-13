@@ -107,7 +107,7 @@ export default function NavSidebar() {
             borderRadius: 2,
             position: 'relative',
             fontSize: 15,
-            color: isActive ? '#00badc' : '#163d55',
+            color: isActive ? '#00badc' : '#316a86',
             background: isActive ? 'rgba(0,186,220,0.06)' : 'transparent',
             transition: 'color 0.15s, background 0.15s',
             textDecoration: 'none',

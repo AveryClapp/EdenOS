@@ -75,7 +75,7 @@ export default function AmbientBar() {
           EDEN OS
         </span>
         {DOT}
-        <span style={{ color: '#316a86' }}>v1.0</span>
+        <span style={{ color: '#5fa8c8' }}>v{__APP_VERSION__}</span>
         {DOT}
         <span style={{
           display: 'inline-block',
@@ -85,7 +85,7 @@ export default function AmbientBar() {
           animation: 'pulse-dot 2.5s ease-in-out infinite',
           marginRight: 5,
         }} />
-        <span style={{ color: '#163d55', fontSize: 9 }}>ONLINE</span>
+        <span style={{ color: '#316a86', fontSize: 9 }}>ONLINE</span>
       </div>
 
       {/* Center — live clock */}
@@ -112,7 +112,7 @@ export default function AmbientBar() {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {whoop != null && (
           <>
-            <span style={{ color: '#163d55', fontSize: 9, letterSpacing: '0.12em' }}>RECOVERY</span>
+            <span style={{ color: '#316a86', fontSize: 9, letterSpacing: '0.12em' }}>RECOVERY</span>
             <span style={{ color: recoveryColor, marginLeft: 4, fontSize: 10 }}>
               {whoop.recovery_score}%
             </span>

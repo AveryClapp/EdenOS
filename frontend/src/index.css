@@ -177,67 +177,35 @@ input, select, textarea {
               0 0 3px rgba(255, 179, 0, 0.4);
 }
 
-/* ─── Scan sweep animation ───────────────────────────────────── */
-@keyframes scan-sweep {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(2000px); opacity: 0; }
-}
-
+/* ─── Scan host (layout only, no sweep animation) ────────────── */
 .scan-host {
   position: relative;
-  overflow: hidden;
-}
-
-.scan-host::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0;
-  height: 80px;
-  background: linear-gradient(to bottom,
-    transparent 0%,
-    rgba(0, 186, 220, 0.025) 40%,
-    rgba(0, 186, 220, 0.025) 60%,
-    transparent 100%
-  );
-  animation: scan-sweep 6s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 1;
 }
 
 /* ─── Animations ─────────────────────────────────────────────── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 @keyframes pulse-dot {
-  0%, 100% { opacity: 0.25; transform: scale(0.75); }
-  50%       { opacity: 1;    transform: scale(1);    }
-}
-@keyframes pulse-glow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(0,186,220,0.3)); }
-  50%       { filter: drop-shadow(0 0 6px rgba(0,186,220,0.7)); }
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1;   }
 }
 @keyframes blink-cursor {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
 }
 
-.fade-up { animation: fadeUp 0.5s ease both; }
-.fade-in { animation: fadeIn 0.3s ease both; }
+.fade-up { animation: fadeIn 0.2s ease both; }
+.fade-in { animation: fadeIn 0.2s ease both; }
 
 /* Stagger helpers */
-.delay-1 { animation-delay: 0.06s; }
-.delay-2 { animation-delay: 0.12s; }
-.delay-3 { animation-delay: 0.18s; }
-.delay-4 { animation-delay: 0.24s; }
-.delay-5 { animation-delay: 0.30s; }
-.delay-6 { animation-delay: 0.36s; }
+.delay-1 { animation-delay: 0.04s; }
+.delay-2 { animation-delay: 0.08s; }
+.delay-3 { animation-delay: 0.12s; }
+.delay-4 { animation-delay: 0.16s; }
+.delay-5 { animation-delay: 0.20s; }
+.delay-6 { animation-delay: 0.24s; }
 
 /* ─── Cyber divider ──────────────────────────────────────────── */
 .cyber-line {

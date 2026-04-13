@@ -239,8 +239,8 @@ export default function EdenPanel() {
                     borderRadius: '50%',
                     background: '#00badc',
                     display: 'inline-block',
-                    animation: 'pulse-dot 1.2s ease-in-out infinite',
-                    animationDelay: `${i * 0.2}s`,
+                    animation: 'blink-cursor 1s step-start infinite',
+                    animationDelay: `${i * 0.3}s`,
                   }}
                 />
               ))}
