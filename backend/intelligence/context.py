@@ -9,6 +9,7 @@ from backend.models.schedule_block import ScheduleBlock
 from backend.models.learning_record import LearningRecord
 from backend.scheduler.decay import compute_urgency
 from backend.intelligence.behavioral_profile import build_behavioral_profile
+from backend.intelligence.temporal import get_temporal_context
 
 _72H = timedelta(hours=72)
 _24H = timedelta(hours=24)
@@ -34,6 +35,7 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
         "whoop_today": _build_whoop_today(db, now),
         "behavioral_profile": build_behavioral_profile(db),
         "user_memory": _build_user_memory(db),
+        "temporal_context": get_temporal_context(now),
     }
 
 
