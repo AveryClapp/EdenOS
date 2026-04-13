@@ -23,6 +23,13 @@ class EdenClient:
 
     SESSION_OPEN_TOKEN = "__session_open__"
 
+    # Override the JSON format rule for streaming — plain prose only
+    _STREAM_FORMAT_OVERRIDE = (
+        "\n\n## Streaming mode\n"
+        "Respond with plain prose only — no JSON wrapper, no {reasoning:...} envelope. "
+        "Write directly to the user as if speaking. Keep the same voice and depth."
+    )
+
     def chat_stream(self, user_message: str, db: Session, now=None):
         """
         Generator that yields plain-text chunks from the LLM.
@@ -31,10 +38,10 @@ class EdenClient:
         snapshot = build_context_snapshot(db, now=now)
 
         if user_message == self.SESSION_OPEN_TOKEN:
-            system = SYSTEM_PROMPT + "\n\n" + SESSION_OPEN_PROMPT
+            system = SYSTEM_PROMPT + "\n\n" + SESSION_OPEN_PROMPT + self._STREAM_FORMAT_OVERRIDE
             prompt = format_chat_prompt("Open a new session. Greet the user based on the temporal context.", snapshot)
         else:
-            system = SYSTEM_PROMPT
+            system = SYSTEM_PROMPT + self._STREAM_FORMAT_OVERRIDE
             prompt = format_chat_prompt(user_message, snapshot)
 
         with self._client.messages.stream(
