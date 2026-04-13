@@ -23,6 +23,29 @@ class EdenClient:
 
     SESSION_OPEN_TOKEN = "__session_open__"
 
+    def chat_stream(self, user_message: str, db: Session, now=None):
+        """
+        Generator that yields plain-text chunks from the LLM.
+        Text-only — no tool use. Use chat() when tools are needed.
+        """
+        snapshot = build_context_snapshot(db, now=now)
+
+        if user_message == self.SESSION_OPEN_TOKEN:
+            system = SYSTEM_PROMPT + "\n\n" + SESSION_OPEN_PROMPT
+            prompt = format_chat_prompt("Open a new session. Greet the user based on the temporal context.", snapshot)
+        else:
+            system = SYSTEM_PROMPT
+            prompt = format_chat_prompt(user_message, snapshot)
+
+        with self._client.messages.stream(
+            model=settings.llm_model,
+            max_tokens=2048,
+            system=system,
+            messages=[{"role": "user", "content": prompt}],
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+
     def chat(self, user_message: str, db: Session, now=None) -> dict:
         """
         Send a user message to the LLM with full context and tools injected.

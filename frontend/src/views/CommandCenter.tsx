@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 interface Task {
@@ -270,22 +269,12 @@ const fetchContext = (): Promise<ContextSnapshot> =>
   fetch('/api/context').then(r => { if (!r.ok) throw new Error(); return r.json() })
 
 export default function CommandCenter() {
-  const [clock, setClock] = useState('')
   const { data: ctx, isError } = useQuery<ContextSnapshot>({
     queryKey: ['context'],
     queryFn: fetchContext,
     staleTime: 60_000,
     refetchInterval: 120_000,
   })
-
-  useEffect(() => {
-    const tick = () => setClock(new Date().toLocaleTimeString([], {
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-    }))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
 
   if (isError) return (
     <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.1em' }}>
@@ -294,9 +283,20 @@ export default function CommandCenter() {
   )
 
   if (!ctx) return (
-    <div style={{ padding: 32, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.1em' }}>
-      <span style={{ animation: 'pulse-dot 1s infinite', color: '#00badc' }}>◆</span>
-      INITIALIZING...
+    <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ width: 180, height: 34, background: 'rgba(0,186,220,0.04)', borderRadius: 2, animation: 'blink-cursor 1.5s step-start infinite' }} />
+          <div style={{ width: 260, height: 11, background: 'rgba(0,186,220,0.03)', borderRadius: 2 }} />
+        </div>
+        <div style={{ width: 80, height: 34, background: 'rgba(0,186,220,0.03)', borderRadius: 2 }} />
+      </div>
+      <div className="cyber-line" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {[160, 110, 110, 90].map((h, i) => (
+          <div key={i} className="hud-panel" style={{ height: h, opacity: 0.35 }} />
+        ))}
+      </div>
     </div>
   )
 
@@ -351,7 +351,7 @@ export default function CommandCenter() {
             letterSpacing: '0.12em',
             marginTop: 5,
           }}>
-            {t.day_of_week.toUpperCase()} · {t.date} · {t.hours_left_in_day}H REMAINING
+            {t.day_of_week.toUpperCase()} · {t.date}
             {t.days_since_last_session && t.days_since_last_session > 0 && (
               <span style={{ color: '#ffb300', marginLeft: 8 }}>
                 · {t.days_since_last_session}D SINCE LAST SESSION
@@ -360,26 +360,16 @@ export default function CommandCenter() {
           </div>
         </div>
 
-        {/* Right: live clock */}
+        {/* Right: hours remaining */}
         <div style={{ textAlign: 'right' }}>
           <div style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 30,
-            color: '#00badc',
-            letterSpacing: '0.14em',
+            fontSize: 28,
+            color: 'rgba(0,186,220,0.2)',
+            letterSpacing: '0.12em',
             lineHeight: 1,
-            textShadow: '0 0 20px rgba(0,186,220,0.35)',
           }}>
-            {clock}
-          </div>
-          <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            color: '#316a86',
-            letterSpacing: '0.16em',
-            marginTop: 4,
-          }}>
-            LOCAL · AUTO-SYNC
+            {t.hours_left_in_day}<span style={{ fontSize: 14, marginLeft: 4 }}>H LEFT</span>
           </div>
         </div>
       </div>
@@ -390,7 +380,7 @@ export default function CommandCenter() {
       {/* ─── Main grid ──────────────────────────────────────────────── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 260px',
+        gridTemplateColumns: '1fr 1fr',
         gridTemplateRows: 'auto auto',
         gap: 12,
         flex: 1,
@@ -564,23 +554,6 @@ export default function CommandCenter() {
           </div>
         </HudPanel>
 
-        {/* ─── Finance (Phase II) ──────────────────────────────────────── */}
-        <HudPanel label="Finance" indicator="idle" delay={0.26}>
-          <div style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 9,
-            color: '#316a86',
-            letterSpacing: '0.12em',
-            lineHeight: 2,
-          }}>
-            <div>NET WORTH&nbsp;&nbsp;&nbsp;&nbsp;· · ·</div>
-            <div>PORTFOLIO&nbsp;&nbsp;&nbsp;&nbsp;· · ·</div>
-            <div>CASH RUNWAY&nbsp;&nbsp;· · ·</div>
-            <div style={{ marginTop: 6, color: '#0f2438', fontSize: 8 }}>
-              PHASE II · MANIFOLD INTEGRATION PENDING
-            </div>
-          </div>
-        </HudPanel>
 
       </div>
     </div>

@@ -1,8 +1,13 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_INSECURE_DEFAULTS = {"dev-secret-change-in-prod", "secret", "dev", ""}
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    environment: str = "development"
 
     database_url: str = "postgresql://eden:eden@localhost:5432/eden"
     scheduler_interval_seconds: int = 1800
@@ -26,5 +31,13 @@ class Settings(BaseSettings):
     whoop_client_secret: str = ""
     whoop_redirect_uri: str = "http://localhost:8000/api/whoop/callback"
 
+    def validate_secrets(self) -> None:
+        if self.environment != "development" and self.secret_key in _INSECURE_DEFAULTS:
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value in non-development environments. "
+                "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            )
+
 
 settings = Settings()
+settings.validate_secrets()

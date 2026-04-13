@@ -1,4 +1,6 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from backend.db import get_db
@@ -147,6 +149,32 @@ def _execute_tool(name: str, inp: dict, db: Session) -> None:
     elif name == "run_scheduler":
         from backend.api.schedule import _run_scheduler_job
         _run_scheduler_job(db)
+
+
+@router.post("/stream")
+def chat_stream(
+    body: ChatRequest,
+    db: Session = Depends(get_db),
+    eden: EdenClient = Depends(get_eden_client),
+):
+    """
+    SSE endpoint that streams Eden's response token by token.
+    Emits: data: {"delta": "..."}\n\n  then  data: {"done": true}\n\n
+    """
+    def generate():
+        try:
+            for chunk in eden.chat_stream(body.message, db):
+                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+        finally:
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("", response_model=ChatResponse)

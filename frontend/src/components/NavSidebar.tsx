@@ -4,6 +4,7 @@ const NAV = [
   { path: '/',         label: 'Home',     glyph: '⌂', end: true  },
   { path: '/today',    label: 'Today',    glyph: '▦', end: false },
   { path: '/week',     label: 'Week',     glyph: '▤', end: false },
+  { path: '/lifemap',  label: 'Life Map', glyph: '⬡', end: false },
   { path: '/goals',    label: 'Goals',    glyph: '◈', end: false },
   { path: '/projects', label: 'Projects', glyph: '◧', end: false },
   { path: '/settings', label: 'Settings', glyph: '⚙', end: false },
