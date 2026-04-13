@@ -1,33 +1,33 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import Sidebar from './components/Sidebar'
+import AmbientBar from './components/AmbientBar'
+import NavSidebar from './components/NavSidebar'
+import EdenPanel from './components/EdenPanel'
+import CommandCenter from './views/CommandCenter'
 import Today from './views/Today'
 import Week from './views/Week'
 import Goals from './views/Goals'
 import Projects from './views/Projects'
-import Chat from './views/Chat'
 import Settings from './views/Settings'
-import PlanningSession from './views/PlanningSession'
-import WeekPlanningSession from './views/WeekPlanningSession'
-import QuickAdd from './components/QuickAdd'
 
 export default function App() {
   return (
-    <div className="flex h-screen overflow-hidden font-mono" style={{ background: '#c8b89a', color: '#1a1208' }}>
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <Routes>
-          <Route path="/" element={<Today />} />
-          <Route path="/week" element={<Week />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/plan" element={<PlanningSession />} />
-          <Route path="/plan/week" element={<WeekPlanningSession />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      <QuickAdd />
+    <div className="eden-shell flex flex-col h-screen overflow-hidden">
+      <AmbientBar />
+      <div className="flex flex-1 overflow-hidden">
+        <NavSidebar />
+        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--color-base)' }}>
+          <Routes>
+            <Route path="/" element={<CommandCenter />} />
+            <Route path="/today" element={<Today />} />
+            <Route path="/week" element={<Week />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <EdenPanel />
+      </div>
     </div>
   )
 }
