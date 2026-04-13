@@ -39,46 +39,21 @@ export default function NavSidebar() {
       {/* Brand mark */}
       <div
         style={{
-          width: 30, height: 30,
+          width: 28, height: 28,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: 14,
           flexShrink: 0,
-          position: 'relative',
           fontFamily: 'var(--font-display)',
           fontWeight: 700,
-          fontSize: 14,
+          fontSize: 15,
           letterSpacing: '0.05em',
           color: '#00badc',
-          textShadow: '0 0 12px rgba(0,186,220,0.6)',
+          border: '1px solid rgba(0,186,220,0.25)',
+          borderRadius: 2,
         }}
       >
-        {/* Corner brackets */}
-        <span style={{
-          position: 'absolute', top: 0, left: 0,
-          width: 6, height: 6,
-          borderTop: '1.5px solid rgba(0,186,220,0.6)',
-          borderLeft: '1.5px solid rgba(0,186,220,0.6)',
-        }} />
-        <span style={{
-          position: 'absolute', top: 0, right: 0,
-          width: 6, height: 6,
-          borderTop: '1.5px solid rgba(0,186,220,0.6)',
-          borderRight: '1.5px solid rgba(0,186,220,0.6)',
-        }} />
-        <span style={{
-          position: 'absolute', bottom: 0, left: 0,
-          width: 6, height: 6,
-          borderBottom: '1.5px solid rgba(0,186,220,0.6)',
-          borderLeft: '1.5px solid rgba(0,186,220,0.6)',
-        }} />
-        <span style={{
-          position: 'absolute', bottom: 0, right: 0,
-          width: 6, height: 6,
-          borderBottom: '1.5px solid rgba(0,186,220,0.6)',
-          borderRight: '1.5px solid rgba(0,186,220,0.6)',
-        }} />
         E
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface Message {
   role: 'eden' | 'user'
@@ -8,13 +8,66 @@ interface Message {
 
 const SESSION_OPEN_TOKEN = '__session_open__'
 
+// ─── Speech recognition types ────────────────────────────────────────────────
+
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition
+    webkitSpeechRecognition: typeof SpeechRecognition
+  }
+}
+
+// ─── TTS helper ──────────────────────────────────────────────────────────────
+
+function speakText(text: string) {
+  if (!('speechSynthesis' in window)) return
+  window.speechSynthesis.cancel()
+
+  const utter = new SpeechSynthesisUtterance(text)
+  utter.rate = 0.92
+  utter.pitch = 0.85
+
+  // Try to pick a clear, slightly deep voice
+  const pickVoice = () => {
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = [
+      'Google UK English Male',
+      'Daniel',        // macOS British
+      'Arthur',        // macOS British
+      'Google US English',
+      'Samantha',      // macOS US
+    ]
+    for (const name of preferred) {
+      const v = voices.find(v => v.name.includes(name))
+      if (v) { utter.voice = v; break }
+    }
+    window.speechSynthesis.speak(utter)
+  }
+
+  // getVoices() may not be populated yet on first call
+  if (window.speechSynthesis.getVoices().length > 0) {
+    pickVoice()
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => { pickVoice(); window.speechSynthesis.onvoiceschanged = null }
+  }
+}
+
+// ─── EdenPanel ───────────────────────────────────────────────────────────────
+
 export default function EdenPanel() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [showReasoning, setShowReasoning] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [speechSupported] = useState(() =>
+    typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+  )
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const recognizerRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null)
 
   useEffect(() => {
     sendMessage(SESSION_OPEN_TOKEN, true)
@@ -24,7 +77,10 @@ export default function EdenPanel() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function sendMessage(text: string, silent = false) {
+  // Cancel TTS when component unmounts
+  useEffect(() => () => { window.speechSynthesis?.cancel() }, [])
+
+  const sendMessage = useCallback(async (text: string, silent = false) => {
     if (!silent) {
       setMessages(m => [...m, { role: 'user', content: text }])
     }
@@ -37,10 +93,9 @@ export default function EdenPanel() {
       })
       if (!res.ok) throw new Error('Chat request failed')
       const data = await res.json()
-      setMessages(m => [
-        ...m,
-        { role: 'eden', content: data.content || "Standing by.", reasoning: data.reasoning },
-      ])
+      const reply = data.content || 'Standing by.'
+      setMessages(m => [...m, { role: 'eden', content: reply, reasoning: data.reasoning }])
+      if (!silent && voiceEnabled) speakText(reply)
     } catch {
       if (!silent) {
         setMessages(m => [...m, { role: 'eden', content: 'Neural link interrupted.' }])
@@ -48,13 +103,44 @@ export default function EdenPanel() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [voiceEnabled])
 
   function handleSend() {
     const text = input.trim()
     if (!text || loading) return
     setInput('')
     sendMessage(text)
+  }
+
+  function toggleListening() {
+    if (listening) {
+      recognizerRef.current?.stop()
+      return
+    }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const rec = new SR()
+    rec.lang = 'en-US'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+
+    rec.onresult = (e: SpeechRecognitionEvent) => {
+      const transcript = e.results[0][0].transcript.trim()
+      if (transcript) {
+        setInput('')
+        sendMessage(transcript)
+      }
+    }
+
+    rec.onerror = () => setListening(false)
+    rec.onend = () => setListening(false)
+
+    recognizerRef.current = rec
+    rec.start()
+    setListening(true)
+
+    // Stop any ongoing TTS before listening
+    window.speechSynthesis?.cancel()
   }
 
   return (
@@ -98,7 +184,6 @@ export default function EdenPanel() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* Status dot */}
           <span style={{
             width: 5, height: 5,
             borderRadius: '50%',
@@ -117,23 +202,102 @@ export default function EdenPanel() {
             EDEN · NEURAL LINK
           </span>
         </div>
-        <button
-          onClick={() => setShowReasoning(r => !r)}
-          style={{
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {/* Voice output toggle */}
+          {speechSupported && (
+            <button
+              onClick={() => {
+                if (voiceEnabled) window.speechSynthesis?.cancel()
+                setVoiceEnabled(v => !v)
+              }}
+              title={voiceEnabled ? 'Mute voice' : 'Enable voice responses'}
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: voiceEnabled ? '#00badc' : '#316a86',
+                background: voiceEnabled ? 'rgba(0,186,220,0.06)' : 'transparent',
+                padding: '2px 5px',
+                borderRadius: 2,
+                border: voiceEnabled ? '1px solid rgba(0,186,220,0.2)' : '1px solid transparent',
+                transition: 'all 0.15s',
+                lineHeight: 1,
+              }}
+            >
+              {voiceEnabled ? '◉' : '◎'}
+            </button>
+          )}
+
+          {/* Reasoning trace toggle */}
+          <button
+            onClick={() => setShowReasoning(r => !r)}
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              color: showReasoning ? '#00badc' : '#316a86',
+              background: showReasoning ? 'rgba(0,186,220,0.06)' : 'transparent',
+              padding: '2px 6px',
+              borderRadius: 2,
+              border: showReasoning ? '1px solid rgba(0,186,220,0.2)' : '1px solid transparent',
+              transition: 'all 0.15s',
+            }}
+          >
+            TRACE
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Listening indicator ─────────────────────────────────── */}
+      {listening && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 12px',
+          background: 'rgba(0,186,220,0.04)',
+          borderBottom: '1px solid rgba(0,186,220,0.08)',
+          flexShrink: 0,
+        }}>
+          {/* Animated waveform bars */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {[0.6, 1.0, 0.7, 1.0, 0.5].map((h, i) => (
+              <div
+                key={i}
+                style={{
+                  width: 2,
+                  height: `${h * 12}px`,
+                  background: '#00badc',
+                  borderRadius: 1,
+                  animation: 'blink-cursor 0.6s step-start infinite',
+                  animationDelay: `${i * 0.12}s`,
+                  opacity: 0.8,
+                }}
+              />
+            ))}
+          </div>
+          <span style={{
             fontFamily: 'var(--font-mono)',
             fontSize: 9,
-            letterSpacing: '0.1em',
-            color: showReasoning ? '#00badc' : '#163d55',
-            background: showReasoning ? 'rgba(0,186,220,0.06)' : 'transparent',
-            padding: '2px 6px',
-            borderRadius: 2,
-            border: showReasoning ? '1px solid rgba(0,186,220,0.2)' : '1px solid transparent',
-            transition: 'all 0.15s',
-          }}
-        >
-          TRACE
-        </button>
-      </div>
+            letterSpacing: '0.12em',
+            color: '#00badc',
+          }}>
+            LISTENING
+          </span>
+          <button
+            onClick={() => recognizerRef.current?.stop()}
+            style={{
+              marginLeft: 'auto',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              color: '#316a86',
+              letterSpacing: '0.08em',
+            }}
+          >
+            CANCEL
+          </button>
+        </div>
+      )}
 
       {/* ─── Messages ────────────────────────────────────────────── */}
       <div
@@ -150,7 +314,6 @@ export default function EdenPanel() {
           <div key={i} className="fade-in">
             {msg.role === 'eden' ? (
               <div>
-                {/* Reasoning trace */}
                 {showReasoning && msg.reasoning && (
                   <div
                     style={{
@@ -162,7 +325,7 @@ export default function EdenPanel() {
                       borderRadius: 1,
                       fontFamily: 'var(--font-mono)',
                       fontSize: 10,
-                      color: '#163d55',
+                      color: '#316a86',
                       lineHeight: 1.5,
                       fontStyle: 'italic',
                     }}
@@ -170,8 +333,6 @@ export default function EdenPanel() {
                     {msg.reasoning}
                   </div>
                 )}
-
-                {/* Eden message */}
                 <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                   <span style={{
                     fontFamily: 'var(--font-mono)',
@@ -195,12 +356,11 @@ export default function EdenPanel() {
                 </div>
               </div>
             ) : (
-              /* User message */
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', paddingLeft: 4 }}>
                 <span style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: 10,
-                  color: '#163d55',
+                  color: '#316a86',
                   flexShrink: 0,
                   marginTop: 1,
                 }}>
@@ -219,7 +379,6 @@ export default function EdenPanel() {
           </div>
         ))}
 
-        {/* Loading indicator */}
         {loading && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 2 }}>
             <span style={{
@@ -262,11 +421,12 @@ export default function EdenPanel() {
           style={{
             display: 'flex',
             alignItems: 'flex-end',
-            gap: 8,
+            gap: 6,
             background: 'rgba(0,186,220,0.03)',
-            border: '1px solid rgba(0,186,220,0.1)',
+            border: `1px solid ${listening ? 'rgba(0,186,220,0.3)' : 'rgba(0,186,220,0.1)'}`,
             borderRadius: 2,
-            padding: '7px 10px',
+            padding: '7px 8px',
+            transition: 'border-color 0.2s',
           }}
         >
           <span style={{
@@ -288,7 +448,7 @@ export default function EdenPanel() {
                 handleSend()
               }
             }}
-            placeholder="Query Eden..."
+            placeholder={listening ? 'Listening...' : 'Query Eden...'}
             rows={1}
             style={{
               flex: 1,
@@ -304,6 +464,33 @@ export default function EdenPanel() {
               fontFamily: 'var(--font-sans)',
             }}
           />
+
+          {/* Mic button */}
+          {speechSupported && (
+            <button
+              onClick={toggleListening}
+              disabled={loading}
+              title={listening ? 'Stop listening' : 'Speak to Eden'}
+              style={{
+                flexShrink: 0,
+                width: 22, height: 22,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: listening ? 'rgba(0,186,220,0.15)' : 'transparent',
+                border: `1px solid ${listening ? 'rgba(0,186,220,0.4)' : 'rgba(0,186,220,0.1)'}`,
+                borderRadius: 2,
+                color: listening ? '#00badc' : '#316a86',
+                fontSize: 11,
+                transition: 'all 0.15s',
+                cursor: loading ? 'default' : 'pointer',
+              }}
+            >
+              {listening ? '■' : '⏺'}
+            </button>
+          )}
+
+          {/* Send button */}
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
@@ -316,7 +503,7 @@ export default function EdenPanel() {
               background: loading || !input.trim() ? 'transparent' : 'rgba(0,186,220,0.12)',
               border: `1px solid ${loading || !input.trim() ? 'rgba(0,186,220,0.1)' : 'rgba(0,186,220,0.3)'}`,
               borderRadius: 2,
-              color: loading || !input.trim() ? '#163d55' : '#00badc',
+              color: loading || !input.trim() ? '#316a86' : '#00badc',
               fontSize: 12,
               transition: 'all 0.15s',
               cursor: loading || !input.trim() ? 'default' : 'pointer',
@@ -325,6 +512,20 @@ export default function EdenPanel() {
             ↑
           </button>
         </div>
+
+        {/* Voice hint */}
+        {speechSupported && !listening && (
+          <div style={{
+            marginTop: 5,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9,
+            color: '#1e4d6b',
+            letterSpacing: '0.08em',
+            textAlign: 'center',
+          }}>
+            {voiceEnabled ? '◉ VOICE ON · ⏺ TO SPEAK' : '⏺ TO SPEAK · ◎ FOR RESPONSES'}
+          </div>
+        )}
       </div>
     </aside>
   )
