@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getEnergyProfile, setEnergyProfile } from '../api/energy_profile'
-import { getUserProfile, updateUserProfile, getEnergyDefaults } from '../api/user_profile'
+import { getUserProfile, updateUserProfile } from '../api/user_profile'
 import type { UserProfile } from '../types'
 import { listAvailability, createAvailability, deleteAvailability } from '../api/availability'
 import { getWhoopStatus, syncWhoop, connectWhoop } from '../api/whoop'
@@ -74,7 +73,6 @@ function ScheduleSection() {
   const [wakeHour, setWakeHour] = useState(7)
   const [chronotype, setChronotype] = useState('intermediate')
   const [saved, setSaved] = useState(false)
-  const [applying, setApplying] = useState(false)
 
   useEffect(() => {
     if (profile) { setWakeHour(profile.wake_hour); setChronotype(profile.chronotype) }
@@ -86,20 +84,6 @@ function ScheduleSection() {
       qc.invalidateQueries({ queryKey: ['user-profile'] })
       flash()
     },
-  })
-
-  const { mutate: applyDefaults } = useMutation({
-    mutationFn: async () => {
-      await updateUserProfile({ wake_hour: wakeHour, chronotype })
-      return setEnergyProfile(await getEnergyDefaults())
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['user-profile'] })
-      qc.invalidateQueries({ queryKey: ['energy-profile'] })
-      setApplying(false)
-      flash()
-    },
-    onMutate: () => setApplying(true),
   })
 
   function flash() { setSaved(true); setTimeout(() => setSaved(false), 2000) }
@@ -133,14 +117,6 @@ function ScheduleSection() {
       <div className="flex items-center gap-2">
         <button onClick={() => save()} disabled={saving || saved} style={btnPrimary}>
           {saving ? '…' : saved ? 'Saved ✓' : 'Save'}
-        </button>
-        <button
-          onClick={() => applyDefaults()}
-          disabled={applying}
-          style={{ ...btnGhost, color: applying ? '#3f3f46' : '#71717a' }}
-          title="Overwrites energy profile with science-based curve for your chronotype"
-        >
-          {applying ? 'Applying…' : 'Apply energy defaults'}
         </button>
       </div>
     </div>
