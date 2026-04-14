@@ -7,18 +7,18 @@
   --font-mono:    'Share Tech Mono', ui-monospace, monospace;
   --font-display: 'Barlow Condensed', ui-sans-serif, sans-serif;
 
-  /* Surface scale — deep space */
-  --color-base:    #02080f;
-  --color-s1:      #050f1e;
-  --color-s2:      #091829;
-  --color-s3:      #0f2438;
-  --color-s4:      #183350;
+  /* Surface scale — lifted navy (not void black) */
+  --color-base:    #060e1a;
+  --color-s1:      #0c1929;
+  --color-s2:      #112135;
+  --color-s3:      #182e47;
+  --color-s4:      #1f3e5e;
 
-  /* Text scale — cyan-tinted whites */
-  --color-tx1:     #cde8f5;
-  --color-tx2:     #5fa8c8;
-  --color-tx3:     #316a86;
-  --color-tx4:     #163d55;
+  /* Text scale — high contrast with slight cool cast */
+  --color-tx1:     #e4f2fa;   /* near-white — primary content */
+  --color-tx2:     #90c4dd;   /* mid — secondary labels, subtitles */
+  --color-tx3:     #527e96;   /* dim — tertiary, metadata */
+  --color-tx4:     #2c526a;   /* ghost — purely decorative */
 
   /* Accent — electric cyan */
   --color-accent:  #0899b8;
@@ -75,27 +75,26 @@ input, select, textarea {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.018;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
 
-/* Atmospheric radial glow from top */
+/* Atmospheric radial glow — slightly stronger */
 .eden-shell::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(ellipse 140% 60% at 50% -10%, rgba(0,150,190,0.07) 0%, transparent 60%);
+  background: radial-gradient(ellipse 140% 60% at 50% -10%, rgba(0,150,190,0.1) 0%, transparent 60%);
 }
 
 /* ─── HUD Panel ──────────────────────────────────────────────── */
-/* Corner bracket effect using layered gradient backgrounds */
 .hud-panel {
   position: relative;
-  background: rgba(5, 15, 30, 0.95);
-  border: 1px solid rgba(0, 186, 220, 0.07);
+  background: var(--color-s1);
+  border: 1px solid rgba(0, 186, 220, 0.12);
   border-radius: 1px;
 }
 
@@ -118,23 +117,22 @@ input, select, textarea {
     /* Bottom-right corner */
     linear-gradient(to left, #00badc 10px, transparent 10px) 100% 100% / 10px 2px no-repeat,
     linear-gradient(to top, #00badc 10px, transparent 10px) 100% 100% / 2px 10px no-repeat;
-  opacity: 0.5;
+  opacity: 0.35;
   transition: opacity 0.2s;
 }
 
 .hud-panel:hover::before {
-  opacity: 0.9;
+  opacity: 0.7;
 }
 
 /* ─── HUD header label ───────────────────────────────────────── */
 .hud-label {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-cyan);
-  opacity: 0.6;
+  color: var(--color-tx2);   /* was cyan at 0.6 opacity — now readable mid-tone */
 }
 
 /* ─── Data label ─────────────────────────────────────────────── */
@@ -143,7 +141,7 @@ input, select, textarea {
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-tx4);
+  color: var(--color-tx3);
 }
 
 /* ─── Section header ─────────────────────────────────────────── */
@@ -153,7 +151,7 @@ input, select, textarea {
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-tx4);
+  color: var(--color-tx3);
 }
 
 /* ─── Card base ──────────────────────────────────────────────── */
@@ -212,16 +210,16 @@ input, select, textarea {
   height: 1px;
   background: linear-gradient(to right,
     transparent 0%,
-    rgba(0, 186, 220, 0.15) 20%,
-    rgba(0, 186, 220, 0.15) 80%,
+    rgba(0, 186, 220, 0.18) 20%,
+    rgba(0, 186, 220, 0.18) 80%,
     transparent 100%
   );
 }
 
 /* ─── Progress micro-bar ─────────────────────────────────────── */
 .micro-bar {
-  height: 1px;
-  background: rgba(0, 186, 220, 0.08);
+  height: 2px;
+  background: rgba(0, 186, 220, 0.1);
   border-radius: 1px;
   overflow: hidden;
 }
