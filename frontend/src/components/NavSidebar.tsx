@@ -7,6 +7,7 @@ const NAV = [
   { path: '/lifemap',  label: 'Life Map', glyph: '⬡', end: false },
   { path: '/goals',    label: 'Goals',    glyph: '◈', end: false },
   { path: '/projects', label: 'Projects', glyph: '◧', end: false },
+  { path: '/jarvis',   label: 'Eden',     glyph: '◎', end: false },
   { path: '/settings', label: 'Settings', glyph: '⚙', end: false },
 ]
 
