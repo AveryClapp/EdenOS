@@ -16,6 +16,10 @@ if config.config_file_name is not None:
 
 import backend.models  # noqa: F401 — registers all models with Base.metadata
 from backend.db import Base
+from backend.config import settings
+
+# Override alembic.ini URL with the value from settings (reads .env)
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 target_metadata = Base.metadata
 

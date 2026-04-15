@@ -1,8 +1,13 @@
 import { apiFetch } from './client'
 import type { ScheduleResponse, ScheduleRunResult, PlanDayResult, ScheduleExplanation } from '../types'
 
-export const getSchedule = (start?: string) =>
-  apiFetch<ScheduleResponse>(start ? `/schedule?start=${start}` : '/schedule')
+export const getSchedule = (start?: string, days?: number) => {
+  const params = new URLSearchParams()
+  if (start) params.set('start', start)
+  if (days) params.set('days', String(days))
+  const qs = params.toString()
+  return apiFetch<ScheduleResponse>(qs ? `/schedule?${qs}` : '/schedule')
+}
 
 export const runScheduler = () =>
   apiFetch<ScheduleRunResult>('/schedule/run', { method: 'POST' })

@@ -150,6 +150,15 @@ def whoop_sync(db: Session = Depends(get_db)):
     db.commit()
     db.refresh(daily)
 
+    # Adaptive rescheduling: if recovery is below green threshold, re-run the
+    # scheduler so it applies the reduced recovery_multiplier to today's plan.
+    if daily.recovery_score is not None and daily.recovery_score < 67:
+        try:
+            from backend.api.schedule import _run_scheduler_job
+            _run_scheduler_job(db)
+        except Exception as exc:
+            print(f"[whoop] adaptive reschedule failed: {exc}")
+
     return {
         "recovery_score": daily.recovery_score,
         "hrv_rms": daily.hrv_rms,
@@ -158,4 +167,5 @@ def whoop_sync(db: Session = Depends(get_db)):
         "strain_score": daily.strain_score,
         "actual_wake_time": daily.actual_wake_time.isoformat() if daily.actual_wake_time else None,
         "synced_at": daily.synced_at.isoformat(),
+        "schedule_adapted": daily.recovery_score is not None and daily.recovery_score < 67,
     }

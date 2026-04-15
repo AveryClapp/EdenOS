@@ -212,6 +212,38 @@ def _build_alerts(db: Session, now: datetime) -> list[dict]:
     alerts = []
     cutoff_24h = now + _24H
 
+    # Recovery alert: if WHOOP is red/yellow AND cognitive_load=3 tasks are scheduled today
+    try:
+        from backend.models.whoop_daily import WhoopDaily
+        from backend.models.schedule_block import ScheduleBlock as SB
+        today_whoop = db.query(WhoopDaily).filter(WhoopDaily.date == now.date()).first()
+        if today_whoop and today_whoop.recovery_score is not None:
+            rec = today_whoop.recovery_score
+            if rec < 34:
+                severity, label = "high", "red"
+            elif rec < 67:
+                severity, label = "medium", "yellow"
+            else:
+                severity, label = None, None
+
+            if severity:
+                # Check if any deep-work blocks exist today
+                today_blocks = db.query(SB).filter(SB.date == now.date(), SB.is_draft == False).all()
+                task_ids = [b.task_id for b in today_blocks if b.task_id]
+                if task_ids:
+                    deep_tasks = db.query(Task).filter(
+                        Task.id.in_(task_ids),
+                        Task.cognitive_load == 3,
+                    ).count()
+                    if deep_tasks > 0 or rec < 34:
+                        alerts.append({
+                            "type": "low_recovery",
+                            "severity": severity,
+                            "message": f"Recovery is {label} ({rec}%) — schedule adapted, deep work load reduced.",
+                        })
+    except Exception:
+        pass
+
     tasks = db.query(Task).filter(
         Task.deadline.isnot(None),
         Task.status.notin_(["done", "dropped"]),
