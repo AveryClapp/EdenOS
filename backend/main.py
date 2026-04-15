@@ -28,6 +28,7 @@ from backend.api.outlook import router as outlook_router, _sync_outlook
 from backend.api.context_snapshot import router as context_router
 from backend.api.people import router as people_router
 from backend.api.decompose import router as decompose_router
+from backend.api.health import router as health_router
 from backend.config import settings
 
 
@@ -105,6 +106,7 @@ app.include_router(outlook_router)
 app.include_router(context_router)
 app.include_router(people_router)
 app.include_router(decompose_router)
+app.include_router(health_router)
 
 
 @app.get("/health")

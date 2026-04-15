@@ -9,13 +9,15 @@ interface Alert {
 
 // Map alert types to the routes they belong to
 const ALERT_DOMAIN: Record<string, string[]> = {
-  past_deadline:  ['/today', '/week'],
-  due_soon:       ['/today', '/week'],
-  deferred_task:  ['/today'],
-  thin_goal:      ['/goals', '/lifemap'],
-  low_recovery:   ['/today'],
-  stale_contact:  ['/people'],
-  overdue_commitment: ['/people'],
+  past_deadline:       ['/today', '/week'],
+  due_soon:            ['/today', '/week'],
+  deferred_task:       ['/today'],
+  thin_goal:           ['/goals', '/lifemap'],
+  low_recovery:        ['/health'],
+  strain_recovery_conflict: ['/health'],
+  recovery_trend:      ['/health'],
+  stale_contact:       ['/people'],
+  overdue_commitment:  ['/people'],
 }
 
 const SEVERITY_ORDER = { critical: 4, high: 3, medium: 2, low: 1 }
@@ -43,6 +45,7 @@ const NAV = [
   { path: '/lifemap',  label: 'Life Map', glyph: '⬡', end: false },
   { path: '/goals',    label: 'Goals',    glyph: '◈', end: false },
   { path: '/projects', label: 'Projects', glyph: '◧', end: false },
+  { path: '/health',   label: 'Health',   glyph: '◬', end: false },
   { path: '/people',   label: 'People',   glyph: '◉', end: false },
   { path: '/jarvis',   label: 'Eden',     glyph: '◎', end: false },
   { path: '/settings', label: 'Settings', glyph: '⚙', end: false },
