@@ -45,10 +45,11 @@ def _serialize_block(b):
 @router.get("")
 def get_schedule(
     start: date | None = Query(default=None),
+    days: int = Query(default=7, ge=1, le=42),
     db: Session = Depends(get_db),
 ):
     start_date = start or date.today()
-    end_date = start_date + timedelta(days=7)
+    end_date = start_date + timedelta(days=days)
     today = date.today()
 
     blocks = db.query(ScheduleBlock).filter(

@@ -9,7 +9,7 @@ interface ContextSlice {
 const fetchContext = (): Promise<ContextSlice> =>
   fetch('/api/context').then(r => { if (!r.ok) throw new Error(); return r.json() })
 
-const DOT = <span style={{ color: 'rgba(0,186,220,0.2)', margin: '0 6px', fontSize: 8 }}>◆</span>
+const DOT = <span style={{ color: 'rgba(0,186,220,0.35)', margin: '0 6px', fontSize: 8 }}>◆</span>
 
 export default function AmbientBar() {
   const [time, setTime] = useState('')
@@ -52,8 +52,8 @@ export default function AmbientBar() {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        background: 'rgba(2, 8, 15, 0.98)',
-        borderBottom: '1px solid rgba(0,186,220,0.08)',
+        background: 'rgba(6, 14, 26, 0.99)',
+        borderBottom: '1px solid rgba(0,186,220,0.1)',
         flexShrink: 0,
         fontFamily: 'var(--font-mono)',
         fontSize: 10,
@@ -66,7 +66,7 @@ export default function AmbientBar() {
       {/* Left — system ID */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <span style={{
-          color: 'rgba(0,186,220,0.4)',
+          color: 'rgba(0,186,220,0.65)',
           letterSpacing: '0.18em',
           fontSize: 9,
           fontFamily: 'var(--font-display)',
@@ -75,7 +75,7 @@ export default function AmbientBar() {
           EDEN OS
         </span>
         {DOT}
-        <span style={{ color: '#5fa8c8' }}>v{__APP_VERSION__}</span>
+        <span style={{ color: '#90c4dd' }}>v{__APP_VERSION__}</span>
         {DOT}
         <span style={{
           display: 'inline-block',
@@ -85,7 +85,7 @@ export default function AmbientBar() {
           animation: 'pulse-dot 2.5s ease-in-out infinite',
           marginRight: 5,
         }} />
-        <span style={{ color: '#316a86', fontSize: 9 }}>ONLINE</span>
+        <span style={{ color: '#527e96', fontSize: 9 }}>ONLINE</span>
       </div>
 
       {/* Center — live clock */}
@@ -105,14 +105,14 @@ export default function AmbientBar() {
           {time}
         </span>
         {DOT}
-        <span style={{ color: '#316a86', letterSpacing: '0.1em' }}>{date}</span>
+        <span style={{ color: '#527e96', letterSpacing: '0.1em' }}>{date}</span>
       </div>
 
       {/* Right — biometrics + alerts */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {whoop != null && (
           <>
-            <span style={{ color: '#316a86', fontSize: 9, letterSpacing: '0.12em' }}>RECOVERY</span>
+            <span style={{ color: '#527e96', fontSize: 9, letterSpacing: '0.12em' }}>RECOVERY</span>
             <span style={{ color: recoveryColor, marginLeft: 4, fontSize: 10 }}>
               {whoop.recovery_score}%
             </span>
@@ -127,7 +127,7 @@ export default function AmbientBar() {
             {DOT}
           </>
         )}
-        <span style={{ color: 'rgba(0,186,220,0.2)', fontSize: 9, marginLeft: 2 }}>◢</span>
+        <span style={{ color: 'rgba(0,186,220,0.4)', fontSize: 9, marginLeft: 2 }}>◢</span>
       </div>
     </div>
   )

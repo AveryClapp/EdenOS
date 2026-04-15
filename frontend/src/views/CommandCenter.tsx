@@ -46,15 +46,15 @@ interface ContextSnapshot {
 
 const LOAD_LABEL: Record<number, string> = { 1: 'LIGHT', 2: 'MOD', 3: 'DEEP' }
 const LOAD_COLOR: Record<number, string> = {
-  1: 'rgba(0,186,220,0.45)',
-  2: 'rgba(0,186,220,0.75)',
+  1: '#527e96',
+  2: '#00badc',
   3: '#00badc',
 }
 
 const SEV_COLOR: Record<string, string> = {
   critical: '#ff3535',
   high: '#ffb300',
-  medium: '#316a86',
+  medium: '#527e96',
 }
 
 const PHASE_LABEL: Record<string, string> = {
@@ -83,7 +83,7 @@ function HudPanel({
     ok: '#00cc6a',
     warn: '#ffb300',
     danger: '#ff3535',
-    idle: '#316a86',
+    idle: '#2c526a',
   }[indicator ?? 'idle']
 
   return (
@@ -96,20 +96,20 @@ function HudPanel({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px 5px',
-          borderBottom: '1px solid rgba(0,186,220,0.06)',
+          gap: 7,
+          padding: '7px 14px 6px',
+          borderBottom: '1px solid rgba(0,186,220,0.08)',
           flexShrink: 0,
         }}
       >
         {/* Status pip */}
         <span
           style={{
-            width: 4, height: 4,
+            width: 5, height: 5,
             borderRadius: '50%',
             background: indicatorColor,
             boxShadow: indicator && indicator !== 'idle'
-              ? `0 0 5px ${indicatorColor}`
+              ? `0 0 6px ${indicatorColor}`
               : 'none',
             animation: indicator && indicator !== 'idle'
               ? 'pulse-dot 2.5s ease-in-out infinite'
@@ -119,7 +119,7 @@ function HudPanel({
         />
         <span className="hud-label">{label}</span>
       </div>
-      <div style={{ flex: 1, padding: '10px 12px', minHeight: 0 }}>
+      <div style={{ flex: 1, padding: '12px 14px', minHeight: 0 }}>
         {children}
       </div>
     </div>
@@ -143,32 +143,31 @@ function TaskRow({ task, index }: { task: Task; index: number }) {
       className="fade-up"
       style={{
         animationDelay: `${index * 0.03}s`,
-        paddingBottom: 7,
-        borderBottom: '1px solid rgba(0,186,220,0.04)',
-        marginBottom: 7,
+        paddingBottom: 8,
+        borderBottom: '1px solid rgba(0,186,220,0.07)',
+        marginBottom: 8,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
         {/* Chevron */}
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 8,
-          color: 'rgba(0,186,220,0.45)',
+          color: 'rgba(0,186,220,0.5)',
           flexShrink: 0,
-          letterSpacing: 0,
         }}>
           ►
         </span>
         {/* Title */}
         <span style={{
           flex: 1,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 400,
-          color: '#cde8f5',
+          color: '#e4f2fa',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          lineHeight: 1,
+          lineHeight: 1.2,
         }}>
           {task.title}
         </span>
@@ -176,7 +175,7 @@ function TaskRow({ task, index }: { task: Task; index: number }) {
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 9,
-          color: LOAD_COLOR[task.cognitive_load] ?? 'rgba(0,186,220,0.3)',
+          color: LOAD_COLOR[task.cognitive_load] ?? '#527e96',
           flexShrink: 0,
           letterSpacing: '0.06em',
         }}>
@@ -196,9 +195,9 @@ function TaskRow({ task, index }: { task: Task; index: number }) {
         )}
       </div>
 
-      {/* Urgency micro-bar */}
-      <div style={{ marginTop: 4, marginLeft: 14 }}>
-        <div className="micro-bar" style={{ background: 'rgba(0,186,220,0.06)' }}>
+      {/* Urgency bar */}
+      <div style={{ marginTop: 5, marginLeft: 15 }}>
+        <div className="micro-bar">
           <div
             className="micro-bar-fill"
             style={{
@@ -233,13 +232,13 @@ function RecoveryArc({ score, rec }: { score: number; rec: string }) {
     <svg width="72" height="72" viewBox="0 0 72 72" style={{ flexShrink: 0 }}>
       <path
         d={`M${bgS.x},${bgS.y} A${r},${r} 0 ${la},1 ${bgE.x},${bgE.y}`}
-        fill="none" stroke="rgba(0,186,220,0.08)" strokeWidth="2.5" strokeLinecap="round"
+        fill="none" stroke="rgba(0,186,220,0.12)" strokeWidth="3" strokeLinecap="round"
       />
       {score > 0 && (
         <path
           d={`M${bgS.x},${bgS.y} A${r},${r} 0 ${fgLa},1 ${fgE.x},${fgE.y}`}
-          fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round"
-          style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+          fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 5px ${color})` }}
         />
       )}
       <text
@@ -247,14 +246,13 @@ function RecoveryArc({ score, rec }: { score: number; rec: string }) {
         textAnchor="middle" dominantBaseline="middle"
         fill={color} fontSize="18"
         fontFamily="var(--font-display)" fontWeight="600"
-        style={{ textShadow: `0 0 8px ${color}` }}
       >
         {score}
       </text>
       <text
         x="36" y="48"
         textAnchor="middle" dominantBaseline="middle"
-        fill="rgba(0,186,220,0.3)" fontSize="8"
+        fill="#527e96" fontSize="8"
         fontFamily="var(--font-mono)"
       >
         %
@@ -277,7 +275,7 @@ export default function CommandCenter() {
   })
 
   if (isError) return (
-    <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.1em' }}>
+    <div style={{ padding: 32, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#527e96', letterSpacing: '0.1em' }}>
       CONNECTION LOST · RETRYING...
     </div>
   )
@@ -286,15 +284,15 @@ export default function CommandCenter() {
     <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 14 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ width: 180, height: 34, background: 'rgba(0,186,220,0.04)', borderRadius: 2, animation: 'blink-cursor 1.5s step-start infinite' }} />
-          <div style={{ width: 260, height: 11, background: 'rgba(0,186,220,0.03)', borderRadius: 2 }} />
+          <div style={{ width: 180, height: 34, background: 'rgba(0,186,220,0.05)', borderRadius: 2, animation: 'blink-cursor 1.5s step-start infinite' }} />
+          <div style={{ width: 260, height: 11, background: 'rgba(0,186,220,0.04)', borderRadius: 2 }} />
         </div>
-        <div style={{ width: 80, height: 34, background: 'rgba(0,186,220,0.03)', borderRadius: 2 }} />
+        <div style={{ width: 80, height: 34, background: 'rgba(0,186,220,0.04)', borderRadius: 2 }} />
       </div>
       <div className="cyber-line" />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {[160, 110, 110, 90].map((h, i) => (
-          <div key={i} className="hud-panel" style={{ height: h, opacity: 0.35 }} />
+          <div key={i} className="hud-panel" style={{ height: h, opacity: 0.4 }} />
         ))}
       </div>
     </div>
@@ -312,11 +310,11 @@ export default function CommandCenter() {
     <div
       className="scan-host"
       style={{
-        padding: '18px 20px',
+        padding: '20px 22px',
         minHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: 14,
+        gap: 16,
         position: 'relative',
       }}
     >
@@ -328,33 +326,32 @@ export default function CommandCenter() {
           display: 'flex',
           alignItems: 'flex-end',
           justifyContent: 'space-between',
-          paddingBottom: 14,
+          paddingBottom: 16,
         }}
       >
-        {/* Left: greeting + context */}
+        {/* Left: phase + date */}
         <div>
           <div style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 300,
-            fontSize: 34,
-            letterSpacing: '0.08em',
-            color: '#cde8f5',
+            fontSize: 38,
+            letterSpacing: '0.06em',
+            color: '#e4f2fa',
             lineHeight: 1,
-            textShadow: '0 0 40px rgba(0,186,220,0.12)',
           }}>
             {PHASE_LABEL[t.day_phase]}
           </div>
           <div style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 10,
-            color: '#316a86',
-            letterSpacing: '0.12em',
-            marginTop: 5,
+            fontSize: 11,
+            color: '#527e96',
+            letterSpacing: '0.1em',
+            marginTop: 6,
           }}>
             {t.day_of_week.toUpperCase()} · {t.date}
             {t.days_since_last_session && t.days_since_last_session > 0 && (
-              <span style={{ color: '#ffb300', marginLeft: 8 }}>
-                · {t.days_since_last_session}D SINCE LAST SESSION
+              <span style={{ color: '#ffb300', marginLeft: 10 }}>
+                · {t.days_since_last_session}D OFFLINE
               </span>
             )}
           </div>
@@ -364,17 +361,19 @@ export default function CommandCenter() {
         <div style={{ textAlign: 'right' }}>
           <div style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: 28,
-            color: 'rgba(0,186,220,0.2)',
-            letterSpacing: '0.12em',
             lineHeight: 1,
           }}>
-            {t.hours_left_in_day}<span style={{ fontSize: 14, marginLeft: 4 }}>H LEFT</span>
+            <span style={{ fontSize: 30, color: 'rgba(0,186,220,0.55)', letterSpacing: '0.08em' }}>
+              {t.hours_left_in_day}
+            </span>
+            <span style={{ fontSize: 11, color: '#527e96', marginLeft: 5, letterSpacing: '0.1em' }}>
+              H LEFT
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ─── Thin cyan separator ────────────────────────────────────── */}
+      {/* ─── Separator ──────────────────────────────────────────────── */}
       <div className="cyber-line fade-in delay-1" />
 
       {/* ─── Main grid ──────────────────────────────────────────────── */}
@@ -382,11 +381,11 @@ export default function CommandCenter() {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gridTemplateRows: 'auto auto',
-        gap: 12,
+        gap: 14,
         flex: 1,
       }}>
 
-        {/* ─── Priority Queue (spans 2 rows left) ──────────────────── */}
+        {/* ─── Priority Queue ──────────────────────────────────────── */}
         <HudPanel
           label="Priority Queue"
           indicator={tasks.due_soon.length > 0 ? 'warn' : 'ok'}
@@ -394,7 +393,7 @@ export default function CommandCenter() {
           style={{ gridRow: '1 / 3' }}
         >
           {priorityTasks.length === 0 ? (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#316a86', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#527e96', letterSpacing: '0.08em' }}>
               NO ACTIVE ITEMS
             </p>
           ) : (
@@ -402,14 +401,13 @@ export default function CommandCenter() {
               {priorityTasks.map((task, i) => (
                 <TaskRow key={task.id} task={task} index={i} />
               ))}
-
               {taskTotal > 7 && (
                 <div style={{
                   fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  color: '#316a86',
+                  fontSize: 10,
+                  color: '#527e96',
                   letterSpacing: '0.1em',
-                  marginTop: 4,
+                  marginTop: 6,
                 }}>
                   +{taskTotal - 7} MORE IN QUEUE
                 </div>
@@ -418,7 +416,7 @@ export default function CommandCenter() {
           )}
         </HudPanel>
 
-        {/* ─── Alerts ─────────────────────────────────────────────────── */}
+        {/* ─── Alerts ─────────────────────────────────────────────── */}
         <HudPanel
           label="Active Alerts"
           indicator={
@@ -430,27 +428,27 @@ export default function CommandCenter() {
           delay={0.14}
         >
           {alerts.length === 0 ? (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#527e96', letterSpacing: '0.08em' }}>
               NOMINAL · NO FLAGS
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {alerts.slice(0, 3).map((a, i) => (
                 <div
                   key={i}
                   className="fade-up"
-                  style={{ animationDelay: `${i * 0.04}s`, display: 'flex', gap: 7, alignItems: 'flex-start' }}
+                  style={{ animationDelay: `${i * 0.04}s`, display: 'flex', gap: 8, alignItems: 'flex-start' }}
                 >
                   <span style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: 9,
-                    color: SEV_COLOR[a.severity] ?? '#316a86',
+                    color: SEV_COLOR[a.severity] ?? '#527e96',
                     flexShrink: 0,
-                    marginTop: 1,
+                    marginTop: 2,
                   }}>
                     ◈
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 300, color: '#5fa8c8', lineHeight: 1.45 }}>
+                  <span style={{ fontSize: 13, fontWeight: 300, color: '#90c4dd', lineHeight: 1.5 }}>
                     {a.message}
                   </span>
                 </div>
@@ -459,7 +457,7 @@ export default function CommandCenter() {
           )}
         </HudPanel>
 
-        {/* ─── Biometric ──────────────────────────────────────────────── */}
+        {/* ─── Biometric ──────────────────────────────────────────── */}
         <HudPanel
           label="Biometric"
           indicator={
@@ -471,26 +469,25 @@ export default function CommandCenter() {
           delay={0.18}
         >
           {whoop_today ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <RecoveryArc score={whoop_today.recovery_score} rec={whoop_today.recommendation} />
               <div>
                 <div style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: 9,
-                  color: '#316a86',
+                  color: '#527e96',
                   letterSpacing: '0.12em',
-                  marginBottom: 5,
+                  marginBottom: 6,
                 }}>
                   RECOVERY
                 </div>
                 <div style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 400,
                   color: whoop_today.recommendation === 'green' ? '#00cc6a'
                     : whoop_today.recommendation === 'yellow' ? '#ffb300'
                     : '#ff3535',
                   lineHeight: 1.4,
-                  letterSpacing: '0.02em',
                 }}>
                   {whoop_today.recommendation === 'green'
                     ? 'Cleared for full output'
@@ -501,45 +498,45 @@ export default function CommandCenter() {
               </div>
             </div>
           ) : (
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#316a86', letterSpacing: '0.08em' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#527e96', letterSpacing: '0.08em' }}>
               NO BIOMETRIC LINK
             </p>
           )}
         </HudPanel>
 
-        {/* ─── Task Load Distribution ──────────────────────────────────── */}
+        {/* ─── Load Distribution ──────────────────────────────────── */}
         <HudPanel
           label="Load Distribution"
           indicator="idle"
           delay={0.22}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
             {[
               { label: 'DUE SOON', value: tasks.due_soon.length,  cap: 8,  color: '#ffb300' },
               { label: 'ACTIVE',   value: tasks.active.length,    cap: 12, color: '#00badc' },
-              { label: 'BACKLOG',  value: tasks.backlog.length,   cap: 40, color: '#316a86' },
-              { label: 'DEFERRED', value: tasks.deferred.length,  cap: 10, color: '#316a86' },
+              { label: 'BACKLOG',  value: tasks.backlog.length,   cap: 40, color: '#527e96' },
+              { label: 'DEFERRED', value: tasks.deferred.length,  cap: 10, color: '#527e96' },
             ].map(({ label, value, cap, color }, i) => (
               <div key={label} className="fade-up" style={{ animationDelay: `${i * 0.04}s` }}>
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  marginBottom: 3,
+                  marginBottom: 4,
                   alignItems: 'center',
                 }}>
                   <span style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: 9,
-                    color: '#316a86',
+                    fontSize: 10,
+                    color: '#527e96',
                     letterSpacing: '0.1em',
                   }}>
                     {label}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color, fontWeight: 500 }}>
                     {String(value).padStart(2, '0')}
                   </span>
                 </div>
-                <div className="micro-bar" style={{ background: 'rgba(0,186,220,0.06)' }}>
+                <div className="micro-bar">
                   <div
                     className="micro-bar-fill"
                     style={{
@@ -553,7 +550,6 @@ export default function CommandCenter() {
             ))}
           </div>
         </HudPanel>
-
 
       </div>
     </div>

@@ -133,6 +133,24 @@ def complete_task(task_id: str, body: TaskComplete, db: Session = Depends(get_db
 
     db.commit()
     db.refresh(task)
+
+    # Update behavioral identity patterns (best-effort, no LLM call)
+    try:
+        from backend.intelligence.identity_updater import update_identity_from_completion
+        from backend.db import SessionLocal
+        _idb = SessionLocal()
+        try:
+            update_identity_from_completion(
+                task_actual_minutes=body.actual_minutes,
+                task_estimated_minutes=task.estimated_minutes,
+                cognitive_load=task.cognitive_load,
+                db=_idb,
+            )
+        finally:
+            _idb.close()
+    except Exception:
+        pass
+
     return task
 
 

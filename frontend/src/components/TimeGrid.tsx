@@ -80,7 +80,6 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
   const [completing, setCompleting] = useState<CompletingState | null>(null)
   const [mins, setMins] = useState('')
   const [quality, setQuality] = useState('3')
-  const [energy, setEnergy] = useState('3')
   const [completeError, setCompleteError] = useState<string | null>(null)
 
   const { mutate: doCreate, isPending: creating } = useMutation({
@@ -103,7 +102,6 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
       completeTask(completing!.task.id, {
         actual_minutes: Number(mins),
         completion_quality: Number(quality),
-        energy_level_at_start: Number(energy),
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['schedule'] })
@@ -150,7 +148,7 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
     setPending(null)
     setCompleting({ task, blockId: block.id })
     setMins(String(task.estimated_minutes))
-    setQuality('3'); setEnergy('3'); setCompleteError(null)
+    setQuality('3'); setCompleteError(null)
   }
 
   function blockTopPx(startTime: string): number {
@@ -320,9 +318,6 @@ export default function TimeGrid({ blocks, taskMap, date }: TimeGridProps) {
                     style={{ ...inputStyle, width: 50 }} />
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>QUALITY</span>
                   <input value={quality} onChange={e => setQuality(e.target.value)} type="number" min={1} max={5}
-                    style={{ ...inputStyle, width: 36 }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#316a86', letterSpacing: '0.1em' }}>ENERGY</span>
-                  <input value={energy} onChange={e => setEnergy(e.target.value)} type="number" min={1} max={5}
                     style={{ ...inputStyle, width: 36 }} />
                   <button
                     onClick={() => doComplete()}

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.models.user_memory import UserMemory
 
-_VALID_CATEGORIES = {"preference", "constraint", "goal_context", "personal", "signal"}
+_VALID_CATEGORIES = {"preference", "constraint", "goal_context", "personal", "signal", "behavioral_pattern", "peak_hour"}
 
 _EXTRACTION_PROMPT = """You are analyzing a conversation between a user and Eden (an AI scheduling assistant).
 Extract any facts worth remembering about the user — preferences, constraints, personal context, goals, or emotional signals.
@@ -61,16 +61,41 @@ def extract_memories_from_conversation(
         confidence = float(fact.get("confidence", 0.8))
         if category not in _VALID_CATEGORIES or not content:
             continue
-        mem = UserMemory(
-            id=str(uuid.uuid4()),
-            category=category,
-            content=content,
-            confidence=min(1.0, max(0.0, confidence)),
-            source="chat",
-            created_at=datetime.utcnow(),
+
+        # Dedup: find existing active memory with same category and similar content
+        # Match on first 60 chars (normalized) to catch minor rewording of the same fact
+        prefix = content[:60].lower()
+        existing = (
+            db.query(UserMemory)
+            .filter(
+                UserMemory.category == category,
+                UserMemory.is_active == True,
+            )
+            .all()
         )
-        db.add(mem)
-        created.append(mem)
+        match = next(
+            (m for m in existing if m.content[:60].lower() == prefix),
+            None,
+        )
+
+        if match:
+            # Reinforce: bump confidence toward 1.0 and increment observation count
+            match.confidence = min(1.0, match.confidence + 0.05)
+            match.observation_count = (match.observation_count or 1) + 1
+            match.updated_at = datetime.utcnow()
+            created.append(match)
+        else:
+            mem = UserMemory(
+                id=str(uuid.uuid4()),
+                category=category,
+                content=content,
+                confidence=min(1.0, max(0.0, confidence)),
+                source="chat",
+                created_at=datetime.utcnow(),
+                observation_count=1,
+            )
+            db.add(mem)
+            created.append(mem)
 
     if created:
         db.commit()
