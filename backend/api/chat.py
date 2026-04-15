@@ -54,6 +54,15 @@ def _describe_action(name: str, inp: dict, db: Session) -> str:
     if name == "run_scheduler":
         return "Re-run the scheduler"
 
+    if name == "log_contact":
+        from backend.models.person import Person
+        person = db.get(Person, inp.get("person_id", ""))
+        name_ = person.name if person else inp.get("person_id", "?")
+        return f"Log contact with {name_}"
+
+    if name == "add_person":
+        return f"Add {inp.get('name', '?')} as {inp.get('relationship_type', '?')}"
+
     return f"{name}({inp})"
 
 
@@ -150,6 +159,28 @@ def _execute_tool(name: str, inp: dict, db: Session) -> None:
         from backend.api.schedule import _run_scheduler_job
         _run_scheduler_job(db)
 
+    elif name == "log_contact":
+        from backend.models.person import Person
+        from datetime import date
+        person = db.get(Person, inp["person_id"])
+        if not person:
+            raise HTTPException(status_code=404, detail="Person not found")
+        person.last_contact_date = date.today()
+        db.commit()
+
+    elif name == "add_person":
+        from backend.models.person import Person
+        person = Person(
+            id=str(uuid.uuid4()),
+            name=inp["name"],
+            relationship_type=inp.get("relationship_type", "acquaintance"),
+            context=inp.get("context"),
+            is_active=True,
+            created_at=__import__("datetime").datetime.utcnow(),
+        )
+        db.add(person)
+        db.commit()
+
 
 @router.post("/stream")
 def chat_stream(
@@ -165,8 +196,12 @@ def chat_stream(
 
     def generate():
         try:
-            for chunk in eden.chat_stream(body.message, db, history=history):
-                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+            for chunk in eden.chat_stream_with_tools(body.message, db, history=history):
+                if chunk.startswith('{"__tool_uses__"'):
+                    # Tool use sentinel — pass through as-is for frontend to handle
+                    yield f"data: {chunk}\n\n"
+                else:
+                    yield f"data: {json.dumps({'delta': chunk})}\n\n"
         except Exception as exc:
             yield f"data: {json.dumps({'error': str(exc)})}\n\n"
         finally:

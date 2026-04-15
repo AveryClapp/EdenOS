@@ -71,7 +71,25 @@ You are here to assist, not to lead. The user drives. You execute, clarify, and 
 
 ## What you have access to
 
-You have the user's full context — goals, active tasks, schedule, recovery data, financial state. Use it to answer accurately and to execute actions via tools. Don't recite it back unless asked.
+You have the user's full context — goals, active tasks, schedule, recovery data, financial state, relationships, and identity. Use it to answer accurately and to execute actions via tools. Don't recite it back unless asked.
+
+## Using identity and behavioral patterns
+
+`user_memory` contains accumulated observations about how this person works. Use them silently to calibrate your responses:
+
+- `behavioral_pattern` entries (e.g. "consistently underestimates deep work tasks by 35%") → adjust time estimates and scheduling recommendations without announcing it unless asked.
+- `peak_hour` entries → when suggesting when to do something, prefer their documented peak hours for cognitive load 3 work.
+- `preference` and `constraint` entries → treat as standing rules. Don't ask again about things already established.
+- High `observation_count` = well-confirmed pattern. Low = tentative; don't over-rely on it.
+
+Never surface raw memory entries to the user. They inform your judgment; they are not output.
+
+## Goal decomposition
+
+When a user expresses a new aspiration or long-term goal:
+1. Ask at most two clarifying questions (timeline, domain, why it matters) — not a list.
+2. Once you have enough to structure it, call `propose_goal_tree`. Do not ask for permission first.
+3. The user approves before anything is committed. Don't preemptively confirm anything.
 
 ## Response format
 
@@ -167,6 +185,84 @@ EDEN_TOOLS = [
         "name": "run_scheduler",
         "description": "Re-run the scheduler to recompute the week's schedule.",
         "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "propose_goal_tree",
+        "description": "Propose a goal decomposition after gathering enough context from the user. Call this when the user has expressed an aspiration and you have enough information to structure it. Proposes a long-term goal, mid-term milestones, projects, and starter tasks. The user must explicitly approve before anything is committed.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "long_term_goal": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "description": {"type": "string"},
+                        "target_date": {"type": "string", "description": "ISO date YYYY-MM-DD"},
+                        "weight": {"type": "number", "description": "0.0–1.0 importance"},
+                    },
+                    "required": ["title", "target_date"],
+                },
+                "milestones": {
+                    "type": "array",
+                    "description": "1–3 mid-term goals that lead to the long-term goal",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "target_date": {"type": "string"},
+                            "projects": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {"type": "string"},
+                                        "category": {"type": "string", "enum": ["research", "engineering", "academic", "athletic", "career", "personal"]},
+                                        "estimated_hours": {"type": "number"},
+                                        "starter_tasks": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "title": {"type": "string"},
+                                                    "cognitive_load": {"type": "integer", "enum": [1, 2, 3]},
+                                                    "estimated_minutes": {"type": "integer"},
+                                                },
+                                                "required": ["title", "cognitive_load", "estimated_minutes"],
+                                            },
+                                        },
+                                    },
+                                    "required": ["title", "category"],
+                                },
+                            },
+                        },
+                        "required": ["title", "target_date"],
+                    },
+                },
+            },
+            "required": ["long_term_goal", "milestones"],
+        },
+    },
+    {
+        "name": "log_contact",
+        "description": "Log that the user made contact with a person today. Updates their last_contact_date.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"person_id": {"type": "string"}},
+            "required": ["person_id"],
+        },
+    },
+    {
+        "name": "add_person",
+        "description": "Add a new person to the relationship graph.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "relationship_type": {"type": "string", "enum": ["friend", "colleague", "mentor", "family", "acquaintance"]},
+                "context": {"type": "string", "description": "Brief description of who this person is"},
+            },
+            "required": ["name", "relationship_type"],
+        },
     },
 ]
 

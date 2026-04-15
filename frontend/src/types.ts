@@ -179,3 +179,64 @@ export interface ScheduleExplanation {
   summary: string
   block_reasoning: Record<string, string>
 }
+
+export type RelationshipType = 'friend' | 'colleague' | 'mentor' | 'family' | 'acquaintance'
+export type CommitmentStatus = 'open' | 'done' | 'dropped'
+
+export interface Commitment {
+  id: string
+  person_id: string
+  description: string
+  due_date: string | null
+  status: CommitmentStatus
+  created_at: string
+}
+
+export interface Person {
+  id: string
+  name: string
+  relationship_type: RelationshipType
+  context: string | null
+  notes: string | null
+  last_contact_date: string | null
+  is_active: boolean
+  created_at: string
+  commitments: Commitment[]
+}
+
+export interface GoalTreeStarterTask {
+  title: string
+  cognitive_load: 1 | 2 | 3
+  estimated_minutes: number
+  description?: string | null
+}
+
+export interface GoalTreeProject {
+  title: string
+  category: ProjectCategory
+  estimated_hours?: number
+  starter_tasks: GoalTreeStarterTask[]
+}
+
+export interface GoalTreeMilestone {
+  title: string
+  target_date: string
+  projects: GoalTreeProject[]
+}
+
+export interface GoalTreePayload {
+  long_term_goal: {
+    title: string
+    description?: string | null
+    target_date: string
+    weight: number
+  }
+  milestones: GoalTreeMilestone[]
+}
+
+export interface GoalTreeResult {
+  goal_id: string
+  milestone_ids: string[]
+  project_ids: string[]
+  task_ids: string[]
+}

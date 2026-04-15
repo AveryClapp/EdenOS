@@ -35,6 +35,7 @@ def build_context_snapshot(db: Session, now: datetime | None = None) -> dict:
         "whoop_today": _build_whoop_today(db, now),
         "behavioral_profile": build_behavioral_profile(db),
         "user_memory": _build_user_memory(db),
+        "people": _build_people(db, now),
         "temporal_context": get_temporal_context(now),
     }
 
@@ -160,8 +161,51 @@ def _build_user_profile(db: Session) -> dict:
 
 def _build_user_memory(db: Session) -> list[dict]:
     from backend.models.user_memory import UserMemory
-    memories = db.query(UserMemory).filter(UserMemory.is_active == True).all()
-    return [{"category": m.category, "content": m.content} for m in memories]
+    memories = (
+        db.query(UserMemory)
+        .filter(UserMemory.is_active == True)
+        .order_by(UserMemory.observation_count.desc().nullslast())
+        .all()
+    )
+    return [
+        {
+            "category": m.category,
+            "content": m.content,
+            "confidence": m.confidence,
+            "observation_count": m.observation_count or 1,
+        }
+        for m in memories
+    ]
+
+
+def _build_people(db: Session, now: datetime) -> dict:
+    from backend.models.person import Person
+    from backend.models.commitment import Commitment
+    from datetime import timedelta
+
+    stale_threshold = now.date() - timedelta(days=30)
+
+    people = db.query(Person).filter(Person.is_active == True).all()
+
+    result = []
+    for p in people:
+        open_commitments = [
+            c for c in p.commitments if c.status == "open"
+        ]
+        is_stale = (p.last_contact_date is None) or (p.last_contact_date < stale_threshold)
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "relationship_type": p.relationship_type,
+            "last_contact_date": str(p.last_contact_date) if p.last_contact_date else None,
+            "stale": is_stale,
+            "open_commitments": [
+                {"id": c.id, "description": c.description, "due_date": str(c.due_date) if c.due_date else None}
+                for c in open_commitments
+            ],
+        })
+
+    return {"people": result}
 
 
 def _build_alerts(db: Session, now: datetime) -> list[dict]:
@@ -224,6 +268,39 @@ def _build_alerts(db: Session, now: datetime) -> list[dict]:
             "task_id": str(task.id),
             "message": f"'{task.title}' has been deferred — reschedule or drop it?",
         })
+
+    # Stale contact alerts
+    try:
+        from backend.models.person import Person as PersonModel
+        from backend.models.commitment import Commitment as CommitmentModel
+        from datetime import timedelta
+        stale_threshold = now.date() - timedelta(days=30)
+        stale = db.query(PersonModel).filter(
+            PersonModel.is_active == True,
+            (PersonModel.last_contact_date < stale_threshold) | (PersonModel.last_contact_date == None),
+        ).all()
+        for p in stale:
+            alerts.append({
+                "type": "stale_contact",
+                "severity": "medium",
+                "person_id": p.id,
+                "message": f"Haven't been in touch with {p.name} in a while.",
+            })
+
+        # Overdue commitments
+        overdue = db.query(CommitmentModel).filter(
+            CommitmentModel.status == "open",
+            CommitmentModel.due_date < now.date(),
+        ).all()
+        for c in overdue:
+            alerts.append({
+                "type": "overdue_commitment",
+                "severity": "high",
+                "commitment_id": c.id,
+                "message": f"Overdue commitment to {c.person.name}: \"{c.description}\"",
+            })
+    except Exception:
+        pass  # People tables may not exist yet
 
     return alerts
 

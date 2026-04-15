@@ -26,6 +26,8 @@ from backend.api.now import router as now_router
 from backend.api.gcal import router as gcal_router, _sync_gcal
 from backend.api.outlook import router as outlook_router, _sync_outlook
 from backend.api.context_snapshot import router as context_router
+from backend.api.people import router as people_router
+from backend.api.decompose import router as decompose_router
 from backend.config import settings
 
 
@@ -101,6 +103,8 @@ app.include_router(now_router)
 app.include_router(gcal_router)
 app.include_router(outlook_router)
 app.include_router(context_router)
+app.include_router(people_router)
+app.include_router(decompose_router)
 
 
 @app.get("/health")

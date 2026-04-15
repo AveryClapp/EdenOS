@@ -53,6 +53,48 @@ class EdenClient:
             for text in stream.text_stream:
                 yield text
 
+    def chat_stream_with_tools(
+        self,
+        user_message: str,
+        db: Session,
+        now=None,
+        history: list[dict] | None = None,
+    ):
+        """
+        Streaming generator that yields text chunks. If the model invokes tools,
+        the final yield is a JSON string: {"__tool_uses__": [{id, name, input}, ...]}
+
+        Frontend must check each chunk: if it starts with '{"__tool_uses__"', handle
+        it as an action proposal rather than display text.
+        """
+        import json as _json
+
+        snapshot = build_context_snapshot(db, now=now)
+        system = STREAM_SYSTEM_PROMPT
+
+        messages = []
+        for h in (history or []):
+            messages.append({"role": h["role"], "content": h["content"]})
+        messages.append({"role": "user", "content": format_chat_prompt(user_message, snapshot)})
+
+        with self._client.messages.stream(
+            model=settings.llm_model,
+            max_tokens=2048,
+            system=system,
+            tools=EDEN_TOOLS,
+            messages=messages,
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
+            final = stream.get_final_message()
+            tool_uses = [
+                {"id": b.id, "name": b.name, "input": b.input}
+                for b in final.content
+                if b.type == "tool_use"
+            ]
+            if tool_uses:
+                yield _json.dumps({"__tool_uses__": tool_uses})
+
     def chat(self, user_message: str, db: Session, now=None) -> dict:
         """
         Send a user message to the LLM with full context and tools injected.

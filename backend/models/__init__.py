@@ -13,6 +13,8 @@ from backend.models.gcal_token import GCalToken
 from backend.models.outlook_token import OutlookToken
 from backend.models.plan_explanation import PlanExplanation
 from backend.models.rl_episode import RLEpisode
+from backend.models.person import Person
+from backend.models.commitment import Commitment
 
 __all__ = [
     "Goal",
@@ -31,4 +33,6 @@ __all__ = [
     "OutlookToken",
     "PlanExplanation",
     "RLEpisode",
+    "Person",
+    "Commitment",
 ]

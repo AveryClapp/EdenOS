@@ -1,9 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useQueryClient } from '@tanstack/react-query'
+import { commitGoalTree } from '../api/people'
+import type { GoalTreePayload } from '../types'
+
+interface ToolUse {
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
 
 interface Message {
   role: 'eden' | 'user'
   content: string
+  toolUses?: ToolUse[]
 }
 
 const SESSION_OPEN_TOKEN = '__session_open__'
@@ -121,6 +131,345 @@ function ThinkingDots() {
   )
 }
 
+// ─── Goal Proposal Card ───────────────────────────────────────────────────────
+
+function GoalProposalCard({
+  input,
+  onApprove,
+  onDismiss,
+}: {
+  input: Record<string, unknown>
+  onApprove: () => void
+  onDismiss: () => void
+}) {
+  const [committing, setCommitting] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const qc = useQueryClient()
+
+  const payload = input as GoalTreePayload
+  const lt = payload.long_term_goal
+  const milestones = payload.milestones || []
+
+  const totalProjects = milestones.reduce((s, m) => s + (m.projects?.length || 0), 0)
+  const totalTasks = milestones.reduce((s, m) =>
+    s + (m.projects || []).reduce((ps, p) => ps + (p.starter_tasks?.length || 0), 0), 0)
+
+  async function handleApprove() {
+    setCommitting(true)
+    setError(null)
+    try {
+      await commitGoalTree(payload)
+      qc.invalidateQueries({ queryKey: ['goals'] })
+      qc.invalidateQueries({ queryKey: ['projects'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      setDone(true)
+      onApprove()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Commit failed')
+    } finally {
+      setCommitting(false)
+    }
+  }
+
+  if (done) {
+    return (
+      <div style={{
+        marginTop: 10,
+        padding: '10px 14px',
+        background: 'rgba(0,204,106,0.05)',
+        border: '1px solid rgba(0,204,106,0.2)',
+        borderRadius: 3,
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <span style={{ color: '#00cc6a', fontSize: 12 }}>✓</span>
+        <span style={{ fontSize: 12, color: '#5da882', fontWeight: 300 }}>
+          Goal tree committed — {totalProjects} project{totalProjects !== 1 ? 's' : ''}, {totalTasks} starter task{totalTasks !== 1 ? 's' : ''} created.
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      marginTop: 10,
+      border: '1px solid rgba(0,186,220,0.18)',
+      borderRadius: 3,
+      overflow: 'hidden',
+    }}>
+      {/* Card header */}
+      <div style={{
+        padding: '10px 14px',
+        borderBottom: '1px solid rgba(0,186,220,0.08)',
+        background: 'rgba(0,186,220,0.03)',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.12em', color: 'rgba(0,186,220,0.5)' }}>
+          PROPOSED GOAL TREE
+        </span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#2c526a' }}>
+          {milestones.length} milestone{milestones.length !== 1 ? 's' : ''} · {totalProjects} project{totalProjects !== 1 ? 's' : ''} · {totalTasks} task{totalTasks !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      <div style={{ padding: '12px 14px' }}>
+        {/* Long-term goal */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.14em', color: '#527e96', marginBottom: 3 }}>
+            LONG-TERM GOAL
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 400, color: '#e4f2fa' }}>{lt.title}</div>
+          {lt.description && (
+            <div style={{ fontSize: 12, color: '#7ab0c8', fontWeight: 300, marginTop: 2 }}>{lt.description}</div>
+          )}
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#2c526a', marginTop: 3 }}>
+            target: {lt.target_date} · weight: {lt.weight}
+          </div>
+        </div>
+
+        {/* Milestones */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {milestones.map((ms, mi) => (
+            <div key={mi} style={{
+              borderLeft: '2px solid rgba(0,186,220,0.15)',
+              paddingLeft: 10,
+            }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.12em', color: '#527e96', marginBottom: 2 }}>
+                MILESTONE {mi + 1}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 400, color: '#cde8f5' }}>{ms.title}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#2c526a', marginBottom: 6 }}>
+                {ms.target_date}
+              </div>
+
+              {(ms.projects || []).map((proj, pi) => (
+                <div key={pi} style={{
+                  marginTop: 4,
+                  padding: '6px 10px',
+                  background: 'rgba(0,186,220,0.03)',
+                  borderRadius: 2,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: 'rgba(0,186,220,0.4)', letterSpacing: '0.1em' }}>
+                      {proj.category.toUpperCase()}
+                    </span>
+                    <span style={{ fontSize: 12, color: '#90c4dd', fontWeight: 300 }}>{proj.title}</span>
+                    {proj.estimated_hours && (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#2c526a', marginLeft: 'auto' }}>
+                        ~{proj.estimated_hours}h
+                      </span>
+                    )}
+                  </div>
+                  {(proj.starter_tasks || []).map((t, ti) => (
+                    <div key={ti} style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 10, marginTop: 2 }}>
+                      <span style={{ color: 'rgba(0,186,220,0.25)', fontSize: 8 }}>·</span>
+                      <span style={{ fontSize: 11, color: '#7ab0c8', fontWeight: 300 }}>{t.title}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, color: '#2c526a', marginLeft: 'auto' }}>
+                        L{t.cognitive_load} · {t.estimated_minutes}m
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ marginTop: 10, fontSize: 11, color: '#c0392b', fontFamily: 'var(--font-mono)' }}>
+            {error}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onDismiss}
+            style={{
+              fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+              color: '#527e96', background: 'none', border: '1px solid rgba(0,186,220,0.08)',
+              borderRadius: 2, padding: '4px 12px', cursor: 'pointer',
+            }}
+          >
+            DISMISS
+          </button>
+          <button
+            onClick={handleApprove}
+            disabled={committing}
+            style={{
+              fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+              color: committing ? '#2c526a' : '#00badc',
+              background: committing ? 'transparent' : 'rgba(0,186,220,0.08)',
+              border: `1px solid ${committing ? 'rgba(0,186,220,0.06)' : 'rgba(0,186,220,0.3)'}`,
+              borderRadius: 2, padding: '4px 14px', cursor: committing ? 'default' : 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {committing ? 'COMMITTING...' : 'APPROVE & COMMIT'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Generic action proposal card ────────────────────────────────────────────
+
+function ActionProposalCard({
+  toolUse,
+  onApprove,
+  onDismiss,
+}: {
+  toolUse: ToolUse
+  onApprove: () => void
+  onDismiss: () => void
+}) {
+  const [executing, setExecuting] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const qc = useQueryClient()
+
+  const ACTION_LABELS: Record<string, string> = {
+    create_task: 'Create task',
+    update_task: 'Update task',
+    delete_task: 'Delete task',
+    create_project: 'Create project',
+    update_project: 'Update project',
+    run_scheduler: 'Re-run scheduler',
+    log_contact: 'Log contact',
+    add_person: 'Add person',
+  }
+
+  async function handleApprove() {
+    setExecuting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/chat/actions/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actions: [{ tool_use_id: toolUse.id, name: toolUse.name, input: toolUse.input, approved: true }],
+        }),
+      })
+      if (!res.ok) throw new Error('Action failed')
+      qc.invalidateQueries()
+      setDone(true)
+      onApprove()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed')
+    } finally {
+      setExecuting(false)
+    }
+  }
+
+  if (done) {
+    return (
+      <div style={{
+        marginTop: 6,
+        padding: '8px 12px',
+        background: 'rgba(0,204,106,0.05)',
+        border: '1px solid rgba(0,204,106,0.15)',
+        borderRadius: 3,
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <span style={{ color: '#00cc6a', fontSize: 11 }}>✓</span>
+        <span style={{ fontSize: 11, color: '#5da882', fontWeight: 300 }}>Done.</span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      marginTop: 6,
+      border: '1px solid rgba(0,186,220,0.14)',
+      borderRadius: 3,
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: '8px 12px', background: 'rgba(0,186,220,0.03)', borderBottom: '1px solid rgba(0,186,220,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '0.12em', color: 'rgba(0,186,220,0.45)' }}>
+            PROPOSED ACTION
+          </span>
+          <span style={{ fontSize: 12, color: '#90c4dd', fontWeight: 300 }}>
+            {ACTION_LABELS[toolUse.name] || toolUse.name}
+          </span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: '#2c526a', marginTop: 3, wordBreak: 'break-all' }}>
+          {JSON.stringify(toolUse.input, null, 0).slice(0, 120)}
+        </div>
+      </div>
+      <div style={{ padding: '8px 12px', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        {error && <span style={{ fontSize: 10, color: '#c0392b', fontFamily: 'var(--font-mono)', flex: 1 }}>{error}</span>}
+        <button
+          onClick={onDismiss}
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+            color: '#527e96', background: 'none', border: '1px solid rgba(0,186,220,0.08)',
+            borderRadius: 2, padding: '3px 10px', cursor: 'pointer',
+          }}
+        >
+          SKIP
+        </button>
+        <button
+          onClick={handleApprove}
+          disabled={executing}
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em',
+            color: executing ? '#2c526a' : '#00badc',
+            background: executing ? 'transparent' : 'rgba(0,186,220,0.08)',
+            border: `1px solid ${executing ? 'rgba(0,186,220,0.06)' : 'rgba(0,186,220,0.3)'}`,
+            borderRadius: 2, padding: '3px 12px', cursor: executing ? 'default' : 'pointer',
+          }}
+        >
+          {executing ? '...' : 'CONFIRM'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tool use renderer ────────────────────────────────────────────────────────
+
+function ToolUseBlock({ toolUses }: { toolUses: ToolUse[] }) {
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
+  const [approved, setApproved] = useState<Set<string>>(new Set())
+
+  function dismiss(id: string) { setDismissed(s => new Set([...s, id])) }
+  function approve(id: string) { setApproved(s => new Set([...s, id])) }
+
+  const visible = toolUses.filter(t => !dismissed.has(t.id))
+  if (visible.length === 0) return null
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      {visible.map(tu => {
+        if (approved.has(tu.id)) return null
+        if (tu.name === 'propose_goal_tree') {
+          return (
+            <GoalProposalCard
+              key={tu.id}
+              input={tu.input}
+              onApprove={() => approve(tu.id)}
+              onDismiss={() => dismiss(tu.id)}
+            />
+          )
+        }
+        return (
+          <ActionProposalCard
+            key={tu.id}
+            toolUse={tu}
+            onApprove={() => approve(tu.id)}
+            onDismiss={() => dismiss(tu.id)}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Main Jarvis component ────────────────────────────────────────────────────
+
 export default function Jarvis() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -178,6 +527,7 @@ export default function Jarvis() {
       const decoder = new TextDecoder()
       let accumulated = ''
       let buffer = ''
+      let toolUses: ToolUse[] = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -193,7 +543,9 @@ export default function Jarvis() {
             const data = JSON.parse(line.slice(6))
             if (data.done) break
             if (data.error) throw new Error(data.error)
-            if (data.delta) {
+            if (data.__tool_uses__) {
+              toolUses = data.__tool_uses__
+            } else if (data.delta) {
               accumulated += data.delta
               if (silent) continue
               setMessages(m => {
@@ -206,8 +558,15 @@ export default function Jarvis() {
         }
       }
 
+      // Final update — attach tool uses if any
       if (silent) {
-        setMessages([{ role: 'eden', content: accumulated }])
+        setMessages([{ role: 'eden', content: accumulated, toolUses: toolUses.length ? toolUses : undefined }])
+      } else if (toolUses.length) {
+        setMessages(m => {
+          const next = [...m]
+          next[next.length - 1] = { role: 'eden', content: accumulated, toolUses }
+          return next
+        })
       }
 
       if (!silent && voiceEnabled && accumulated) speakText(accumulated)
@@ -393,6 +752,9 @@ export default function Jarvis() {
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <EdenMarkdown content={msg.content} />
+                    {msg.toolUses && msg.toolUses.length > 0 && (
+                      <ToolUseBlock toolUses={msg.toolUses} />
+                    )}
                   </div>
                 </div>
               ) : (

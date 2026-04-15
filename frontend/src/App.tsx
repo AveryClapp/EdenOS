@@ -12,6 +12,7 @@ import Projects from './views/Projects'
 import Settings from './views/Settings'
 import LifeMap from './views/LifeMap'
 import Jarvis from './views/Jarvis'
+import People from './views/People'
 
 export default function App() {
   const [edenCollapsed, setEdenCollapsed] = useState(false)
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/goals" element={<Goals />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/lifemap" element={<LifeMap />} />
+              <Route path="/people" element={<People />} />
               <Route path="/jarvis" element={<Jarvis />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" replace />} />
